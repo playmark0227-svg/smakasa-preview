@@ -1,0 +1,534 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="robots" content="noindex,nofollow,noarchive">
+  <meta name="theme-color" content="#f5f4f8">
+  <title>パスワード保管庫｜デモ</title>
+  <style>
+    :root {
+      color-scheme: light;
+      font-family: -apple-system, BlinkMacSystemFont, "Hiragino Sans", "Yu Gothic", sans-serif;
+      --ink: #1f1d26;
+      --muted: #696570;
+      --line: #dedbe5;
+      --surface: #fff;
+      --canvas: #f5f4f8;
+      --purple: #6451a4;
+      --purple-dark: #4f3d8e;
+      --purple-soft: #efebfb;
+      --green: #25745b;
+      --green-soft: #e8f5ef;
+      --amber: #87550c;
+      --amber-soft: #fff5df;
+      --red: #a03939;
+      --shadow: 0 18px 50px rgba(47, 40, 76, .09);
+    }
+    * { box-sizing: border-box; }
+    html { background: var(--canvas); }
+    body { margin: 0; min-height: 100vh; color: var(--ink); background: var(--canvas); }
+    button, input, select { font: inherit; }
+    button, a { -webkit-tap-highlight-color: transparent; }
+    [hidden] { display: none !important; }
+    .demo-bar {
+      position: sticky;
+      z-index: 20;
+      top: 0;
+      padding: max(9px, env(safe-area-inset-top)) 18px 9px;
+      color: #fff;
+      background: #211d2e;
+      text-align: center;
+      font-size: 12px;
+      font-weight: 800;
+      letter-spacing: .16em;
+    }
+    .shell { width: min(760px, 100%); margin: 0 auto; padding: 18px 18px calc(44px + env(safe-area-inset-bottom)); }
+    .topbar { display: flex; align-items: center; justify-content: space-between; min-height: 44px; }
+    .back { color: var(--purple-dark); font-size: 14px; font-weight: 750; text-decoration: none; }
+    .back::before { content: "‹"; margin-right: 5px; font-size: 22px; line-height: 0; vertical-align: -2px; }
+    .brand { display: flex; align-items: center; gap: 7px; color: #5c5766; font-size: 13px; font-weight: 700; }
+    .brand-mark { display: grid; width: 24px; height: 24px; place-items: center; border-radius: 8px; color: #fff; background: var(--purple); font-size: 12px; }
+    header { padding: 29px 2px 24px; }
+    .eyebrow { margin: 0 0 10px; color: var(--purple); font-size: 12px; font-weight: 800; letter-spacing: .13em; }
+    h1 { margin: 0; max-width: 620px; font-size: clamp(35px, 10vw, 58px); line-height: 1.08; letter-spacing: -.045em; }
+    .lead { margin: 17px 0 0; color: var(--muted); font-size: 16px; line-height: 1.85; }
+    .card { margin: 0 0 16px; padding: 21px; background: var(--surface); border: 1px solid var(--line); border-radius: 24px; box-shadow: var(--shadow); }
+    .local-badge { display: flex; gap: 13px; align-items: flex-start; border-color: #d9d1f4; background: linear-gradient(145deg, #fff, #f7f4ff); }
+    .local-icon { display: grid; flex: 0 0 auto; width: 43px; height: 43px; place-items: center; border-radius: 14px; color: var(--purple); background: var(--purple-soft); font-weight: 900; }
+    .local-badge strong { display: block; margin: 1px 0 4px; font-size: 16px; }
+    .local-badge p { margin: 0; color: var(--muted); font-size: 13px; line-height: 1.65; }
+    h2 { margin: 0 0 9px; font-size: 23px; letter-spacing: -.02em; }
+    h3 { margin: 0 0 7px; font-size: 17px; }
+    .sub { margin: 0 0 18px; color: var(--muted); font-size: 14px; line-height: 1.7; }
+    label { display: block; margin: 15px 0 7px; font-size: 13px; font-weight: 800; }
+    input[type="password"], select {
+      width: 100%;
+      min-height: 52px;
+      padding: 12px 14px;
+      color: var(--ink);
+      background: #fff;
+      border: 1px solid #cfcbd8;
+      border-radius: 14px;
+      font-size: 16px;
+      outline: none;
+    }
+    input:focus, select:focus { border-color: var(--purple); box-shadow: 0 0 0 3px rgba(100, 81, 164, .14); }
+    .button {
+      display: inline-flex;
+      min-height: 48px;
+      padding: 11px 17px;
+      align-items: center;
+      justify-content: center;
+      gap: 7px;
+      border: 0;
+      border-radius: 14px;
+      color: #fff;
+      background: var(--purple);
+      font-weight: 800;
+      text-decoration: none;
+      cursor: pointer;
+    }
+    .button:hover { background: var(--purple-dark); }
+    .button:disabled { cursor: wait; opacity: .62; }
+    .button.primary { width: 100%; min-height: 56px; margin-top: 18px; box-shadow: 0 10px 23px rgba(79, 61, 142, .22); }
+    .button.secondary { color: var(--purple-dark); background: var(--purple-soft); }
+    .button.secondary:hover { background: #e5def9; }
+    .button.ghost { min-height: 42px; padding: 8px 12px; color: #625e69; background: #efedf2; font-size: 13px; }
+    .button.danger { color: var(--red); background: #faeeee; }
+    .button:focus-visible, .back:focus-visible { outline: 3px solid #a99bd7; outline-offset: 3px; }
+    .quick { width: 100%; margin-top: 10px; border: 0; color: var(--purple-dark); background: transparent; font-size: 13px; font-weight: 750; text-decoration: underline; cursor: pointer; }
+    .error { min-height: 1.4em; margin: 12px 0 0; color: var(--red); font-size: 13px; font-weight: 700; }
+    .auth-note { margin: 18px 0 0; padding: 13px 14px; color: #665735; background: var(--amber-soft); border-radius: 14px; font-size: 12px; line-height: 1.65; }
+    .vault-head { display: flex; gap: 13px; align-items: center; justify-content: space-between; margin: 4px 0 18px; }
+    .vault-head p { margin: 3px 0 0; color: var(--muted); font-size: 12px; }
+    .lock-button { flex: 0 0 auto; }
+    .section-label { margin: 28px 2px 11px; color: #6f6979; font-size: 12px; font-weight: 850; letter-spacing: .1em; }
+    .records { display: grid; gap: 12px; }
+    .record { padding: 18px; background: var(--surface); border: 1px solid var(--line); border-radius: 20px; box-shadow: 0 10px 30px rgba(47, 40, 76, .06); }
+    .record-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
+    .dummy { display: inline-block; margin-bottom: 8px; padding: 4px 8px; color: var(--green); background: var(--green-soft); border-radius: 999px; font-size: 10px; font-weight: 850; letter-spacing: .06em; }
+    .record h3 { margin: 0; font-size: 18px; }
+    .username { margin: 5px 0 15px; color: var(--muted); font-size: 13px; word-break: break-all; }
+    .password-row { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; gap: 8px; align-items: center; }
+    .secret {
+      min-width: 0;
+      min-height: 43px;
+      padding: 10px 12px;
+      overflow: hidden;
+      color: #393442;
+      background: #f4f2f7;
+      border-radius: 12px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+      font-size: 13px;
+      line-height: 23px;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .mini { min-height: 43px; padding: 8px 11px; border: 0; border-radius: 12px; color: var(--purple-dark); background: var(--purple-soft); font-size: 12px; font-weight: 850; cursor: pointer; }
+    .mini.copy { color: var(--green); background: var(--green-soft); }
+    .generator-grid { display: grid; grid-template-columns: 1fr; gap: 12px; }
+    .toggle { display: flex; min-height: 52px; margin: 0; padding: 12px 14px; align-items: center; gap: 10px; border: 1px solid #cfcbd8; border-radius: 14px; font-size: 14px; }
+    .toggle input { width: 20px; height: 20px; accent-color: var(--purple); }
+    .generated { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 9px; margin-top: 15px; }
+    .generated output { min-height: 49px; padding: 12px 14px; overflow: hidden; color: #342d4c; background: var(--purple-soft); border-radius: 14px; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 14px; line-height: 25px; text-overflow: ellipsis; white-space: nowrap; }
+    .generator-actions { display: grid; grid-template-columns: 1fr; gap: 9px; margin-top: 10px; }
+    .copy-status { min-height: 22px; margin: 8px 2px 0; color: var(--green); font-size: 12px; font-weight: 750; }
+    .warnings { border-color: #ecd9b5; background: #fffaf1; box-shadow: none; }
+    .warnings h2 { color: #704708; font-size: 20px; }
+    .warnings ul { display: grid; gap: 10px; margin: 13px 0 0; padding-left: 21px; }
+    .warnings li { color: #625641; font-size: 13px; line-height: 1.7; }
+    .footer-actions { display: grid; grid-template-columns: 1fr; gap: 9px; margin-top: 18px; }
+    footer { padding: 13px 4px 0; color: #7d7884; font-size: 11px; line-height: 1.7; text-align: center; }
+    @media (min-width: 680px) {
+      .shell { padding-top: 25px; }
+      header { padding-top: 45px; }
+      .card { padding: 27px; }
+      .records { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .generator-grid { grid-template-columns: 1fr 1fr; }
+      .generator-actions { grid-template-columns: 1fr 1fr; }
+      .footer-actions { grid-template-columns: 1fr 1fr; }
+    }
+    @media (max-width: 390px) {
+      .password-row { grid-template-columns: minmax(0, 1fr) auto; }
+      .password-row .copy { grid-column: 1 / -1; }
+    }
+    @media (prefers-reduced-motion: reduce) { *, *::before, *::after { scroll-behavior: auto !important; animation: none !important; transition: none !important; } }
+  </style>
+</head>
+<body>
+  <div class="demo-bar">DEMO — 本物のパスワードは入れないでください</div>
+  <main class="shell">
+    <nav class="topbar" aria-label="ページ操作">
+      <a class="back" href="../">プレビュー一覧へ</a>
+      <span class="brand"><span class="brand-mark" aria-hidden="true">鍵</span>パスワード保管庫</span>
+    </nav>
+
+    <header>
+      <p class="eyebrow">LOCAL PASSWORD VAULT</p>
+      <h1>この端末の中だけに、控えておく。</h1>
+      <p class="lead">強いパスワードを作り、ブラウザ内で暗号にして保管するWebアプリの操作デモです。サーバーへの保存や端末間の同期は行いません。</p>
+    </header>
+
+    <section class="card local-badge">
+      <span class="local-icon" aria-hidden="true">端</span>
+      <div><strong>サーバーへ送信しません</strong><p>このデモの保存先は、このブラウザの <code>localStorage</code> だけです。ページ内に外部通信の処理はありません。</p></div>
+    </section>
+
+    <section id="auth" class="card" aria-live="polite">
+      <div id="setup-view">
+        <h2>デモ保管庫を準備する</h2>
+        <p class="sub">デモ用の合言葉から暗号鍵を作り、2件の架空データをこのブラウザに保存します。</p>
+        <form id="setup-form">
+          <label for="setup-password">デモ用マスターパスワード</label>
+          <input id="setup-password" type="password" minlength="8" autocomplete="new-password" required aria-describedby="setup-help">
+          <label for="setup-confirm">もう一度入力</label>
+          <input id="setup-confirm" type="password" minlength="8" autocomplete="new-password" required>
+          <p class="error" id="setup-error" role="alert"></p>
+          <button class="button primary" type="submit">架空データでデモを始める</button>
+          <button class="quick" id="fill-demo-password" type="button">デモ用の合言葉を自動入力する</button>
+        </form>
+        <p class="auth-note" id="setup-help">重要なパスワードは入力しないでください。このページは製品版ではなく、操作確認用の静的デモです。</p>
+      </div>
+
+      <div id="unlock-view" hidden>
+        <h2>保管庫のロックを解除</h2>
+        <p class="sub">準備したときのデモ用マスターパスワードを入力してください。</p>
+        <form id="unlock-form">
+          <label for="unlock-password">デモ用マスターパスワード</label>
+          <input id="unlock-password" type="password" autocomplete="current-password" required>
+          <p class="error" id="unlock-error" role="alert"></p>
+          <button class="button primary" type="submit">ロックを解除する</button>
+          <button class="quick" id="reset-from-auth" type="button">デモを初期状態に戻す</button>
+        </form>
+      </div>
+    </section>
+
+    <section id="vault" hidden>
+      <div class="vault-head">
+        <div><strong>ロックを解除しました</strong><p>架空データ2件・このブラウザ内だけ</p></div>
+        <button class="button ghost lock-button" id="lock" type="button">ロックする</button>
+      </div>
+
+      <p class="section-label">保存したパスワード</p>
+      <div class="records" id="records" aria-live="polite"></div>
+      <p class="copy-status" id="copy-status" role="status"></p>
+
+      <p class="section-label">強いパスワードを作る</p>
+      <section class="card">
+        <h2>パスワード生成</h2>
+        <p class="sub">生成はこの端末内で行います。作った文字列をサーバーへ送る処理はありません。</p>
+        <div class="generator-grid">
+          <div>
+            <label for="length">長さ</label>
+            <select id="length">
+              <option value="16">16文字</option>
+              <option value="20" selected>20文字</option>
+              <option value="24">24文字</option>
+              <option value="32">32文字</option>
+            </select>
+          </div>
+          <div>
+            <label>文字の種類</label>
+            <label class="toggle"><input id="symbols" type="checkbox" checked> 記号を含める</label>
+          </div>
+        </div>
+        <div class="generated">
+          <output id="generated" aria-live="polite">生成ボタンを押してください</output>
+          <button class="mini copy" id="copy-generated" type="button" disabled>コピー</button>
+        </div>
+        <div class="generator-actions">
+          <button class="button secondary" id="generate" type="button">新しく生成する</button>
+          <button class="button ghost" id="toggle-generated" type="button" aria-pressed="false" disabled>隠す</button>
+        </div>
+      </section>
+
+      <section class="card warnings">
+        <h2>できないこと・大切な注意</h2>
+        <ul>
+          <li><strong>自動入力はできません。</strong>iPhone標準の「パスワード」とは別のもので、代わりにはなりません。</li>
+          <li><strong>ブラウザのデータを消すと戻せません。</strong>端末の紛失やマスターパスワードを忘れた場合も、当社では復元できません。</li>
+          <li><strong>クリップボードの自動消去は保証できません。</strong>ブラウザの都合で消せないことがあります。貼り付け後は、ほかの文字をコピーして上書きしてください。</li>
+          <li>ほかの端末とは同期せず、漏えいを監視する機能もありません。</li>
+        </ul>
+      </section>
+
+      <div class="footer-actions">
+        <button class="button secondary" id="lock-bottom" type="button">保管庫をロックする</button>
+        <button class="button danger" id="reset" type="button">デモデータを削除する</button>
+      </div>
+    </section>
+
+    <footer>このデモには架空データだけを保存してください。実サービスの安全性や復元性を保証するものではありません。</footer>
+  </main>
+
+  <script>
+    (() => {
+      "use strict";
+
+      const STORAGE_KEY = "gabetto-password-demo-v1";
+      const encoder = new TextEncoder();
+      const decoder = new TextDecoder();
+      const DUMMY_RECORDS = [
+        { id: "demo-bank", service: "デモ銀行（架空）", username: "demo@example.invalid", password: "Demo-Bank-42!Sample" },
+        { id: "sample-photo", service: "サンプル写真（架空）", username: "sample_user", password: "Photo-Demo-73#Only" }
+      ];
+
+      const auth = document.getElementById("auth");
+      const setupView = document.getElementById("setup-view");
+      const unlockView = document.getElementById("unlock-view");
+      const vault = document.getElementById("vault");
+      const recordsElement = document.getElementById("records");
+      const copyStatus = document.getElementById("copy-status");
+      const generated = document.getElementById("generated");
+      const copyGenerated = document.getElementById("copy-generated");
+      const toggleGenerated = document.getElementById("toggle-generated");
+      let records = [];
+      let generatedValue = "";
+      let generatedHidden = false;
+      let statusTimer = 0;
+
+      function bytesToBase64(bytes) {
+        let binary = "";
+        for (const byte of bytes) binary += String.fromCharCode(byte);
+        return btoa(binary);
+      }
+
+      function base64ToBytes(value) {
+        const binary = atob(value);
+        const bytes = new Uint8Array(binary.length);
+        for (let i = 0; i < binary.length; i += 1) bytes[i] = binary.charCodeAt(i);
+        return bytes;
+      }
+
+      async function deriveKey(password, salt) {
+        const material = await crypto.subtle.importKey("raw", encoder.encode(password), "PBKDF2", false, ["deriveKey"]);
+        return crypto.subtle.deriveKey(
+          { name: "PBKDF2", salt, iterations: 150000, hash: "SHA-256" },
+          material,
+          { name: "AES-GCM", length: 256 },
+          false,
+          ["encrypt", "decrypt"]
+        );
+      }
+
+      async function encryptRecords(password, value) {
+        const salt = crypto.getRandomValues(new Uint8Array(16));
+        const iv = crypto.getRandomValues(new Uint8Array(12));
+        const key = await deriveKey(password, salt);
+        const cipher = await crypto.subtle.encrypt({ name: "AES-GCM", iv }, key, encoder.encode(JSON.stringify(value)));
+        return JSON.stringify({ version: 1, salt: bytesToBase64(salt), iv: bytesToBase64(iv), data: bytesToBase64(new Uint8Array(cipher)) });
+      }
+
+      async function decryptRecords(password, stored) {
+        const envelope = JSON.parse(stored);
+        if (envelope.version !== 1) throw new Error("unsupported");
+        const key = await deriveKey(password, base64ToBytes(envelope.salt));
+        const plain = await crypto.subtle.decrypt({ name: "AES-GCM", iv: base64ToBytes(envelope.iv) }, key, base64ToBytes(envelope.data));
+        const value = JSON.parse(decoder.decode(plain));
+        if (!Array.isArray(value)) throw new Error("invalid");
+        return value;
+      }
+
+      function storedVault() {
+        try { return localStorage.getItem(STORAGE_KEY); } catch { return null; }
+      }
+
+      function showAuth(mode) {
+        records = [];
+        recordsElement.replaceChildren();
+        vault.hidden = true;
+        auth.hidden = false;
+        setupView.hidden = mode !== "setup";
+        unlockView.hidden = mode !== "unlock";
+        document.getElementById(mode === "setup" ? "setup-password" : "unlock-password").focus();
+      }
+
+      function showVault(value) {
+        records = value;
+        auth.hidden = true;
+        vault.hidden = false;
+        renderRecords();
+        makePassword();
+      }
+
+      function recordButton(label, className) {
+        const button = document.createElement("button");
+        button.type = "button";
+        button.className = className;
+        button.textContent = label;
+        return button;
+      }
+
+      function renderRecords() {
+        recordsElement.replaceChildren();
+        records.forEach((record) => {
+          const article = document.createElement("article");
+          article.className = "record";
+
+          const badge = document.createElement("span");
+          badge.className = "dummy";
+          badge.textContent = "架空のデモデータ";
+          const heading = document.createElement("h3");
+          heading.textContent = String(record.service);
+          const username = document.createElement("p");
+          username.className = "username";
+          username.textContent = `ユーザー名: ${String(record.username)}`;
+
+          const row = document.createElement("div");
+          row.className = "password-row";
+          const secret = document.createElement("span");
+          secret.className = "secret";
+          secret.textContent = "••••••••••••••••••";
+          secret.setAttribute("aria-label", "パスワードは隠れています");
+          let visible = false;
+
+          const reveal = recordButton("見る", "mini");
+          reveal.setAttribute("aria-pressed", "false");
+          reveal.addEventListener("click", () => {
+            visible = !visible;
+            secret.textContent = visible ? String(record.password) : "••••••••••••••••••";
+            secret.setAttribute("aria-label", visible ? "パスワードを表示しています" : "パスワードは隠れています");
+            reveal.textContent = visible ? "隠す" : "見る";
+            reveal.setAttribute("aria-pressed", String(visible));
+          });
+
+          const copy = recordButton("コピー", "mini copy");
+          copy.addEventListener("click", () => copyText(String(record.password), `${record.service}の架空パスワードをコピーしました。`));
+          row.append(secret, reveal, copy);
+          article.append(badge, heading, username, row);
+          recordsElement.append(article);
+        });
+      }
+
+      async function copyText(value, successMessage) {
+        clearTimeout(statusTimer);
+        try {
+          await navigator.clipboard.writeText(value);
+          copyStatus.textContent = `${successMessage} 自動消去できない場合があるため、貼り付け後は別の文字で上書きしてください。`;
+        } catch {
+          copyStatus.textContent = "このブラウザではコピーできませんでした。文字列を表示して手動でコピーしてください。";
+        }
+        statusTimer = window.setTimeout(() => { copyStatus.textContent = ""; }, 9000);
+      }
+
+      function randomIndex(max) {
+        const limit = Math.floor(0x100000000 / max) * max;
+        const bucket = new Uint32Array(1);
+        do { crypto.getRandomValues(bucket); } while (bucket[0] >= limit);
+        return bucket[0] % max;
+      }
+
+      function makePassword() {
+        const length = Number(document.getElementById("length").value);
+        const symbols = document.getElementById("symbols").checked;
+        const letters = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789";
+        const pool = symbols ? `${letters}!#$%&*+-=?@` : letters;
+        generatedValue = Array.from({ length }, () => pool[randomIndex(pool.length)]).join("");
+        generatedHidden = false;
+        generated.textContent = generatedValue;
+        copyGenerated.disabled = false;
+        toggleGenerated.disabled = false;
+        toggleGenerated.textContent = "隠す";
+        toggleGenerated.setAttribute("aria-pressed", "false");
+      }
+
+      document.getElementById("fill-demo-password").addEventListener("click", () => {
+        document.getElementById("setup-password").value = "demo-pass-2026";
+        document.getElementById("setup-confirm").value = "demo-pass-2026";
+        document.getElementById("setup-error").textContent = "デモ用の合言葉を入力しました。このまま開始できます。";
+      });
+
+      document.getElementById("setup-form").addEventListener("submit", async (event) => {
+        event.preventDefault();
+        const form = event.currentTarget;
+        const password = document.getElementById("setup-password").value;
+        const confirm = document.getElementById("setup-confirm").value;
+        const error = document.getElementById("setup-error");
+        if (password.length < 8) { error.textContent = "8文字以上のデモ用パスワードを入力してください。"; return; }
+        if (password !== confirm) { error.textContent = "2回の入力が一致していません。"; return; }
+        const submit = form.querySelector('button[type="submit"]');
+        submit.disabled = true;
+        submit.textContent = "準備しています…";
+        error.textContent = "";
+        try {
+          const encrypted = await encryptRecords(password, DUMMY_RECORDS);
+          localStorage.setItem(STORAGE_KEY, encrypted);
+          form.reset();
+          showVault(DUMMY_RECORDS.map((record) => ({ ...record })));
+        } catch {
+          error.textContent = "このブラウザではデモ保管庫を準備できませんでした。プライベートブラウズの設定などをご確認ください。";
+        } finally {
+          submit.disabled = false;
+          submit.textContent = "架空データでデモを始める";
+        }
+      });
+
+      document.getElementById("unlock-form").addEventListener("submit", async (event) => {
+        event.preventDefault();
+        const form = event.currentTarget;
+        const passwordInput = document.getElementById("unlock-password");
+        const error = document.getElementById("unlock-error");
+        const stored = storedVault();
+        if (!stored) { showAuth("setup"); return; }
+        const submit = form.querySelector('button[type="submit"]');
+        submit.disabled = true;
+        submit.textContent = "確かめています…";
+        error.textContent = "";
+        try {
+          const value = await decryptRecords(passwordInput.value, stored);
+          passwordInput.value = "";
+          showVault(value);
+        } catch {
+          error.textContent = "マスターパスワードが違うか、デモデータを開けませんでした。";
+        } finally {
+          submit.disabled = false;
+          submit.textContent = "ロックを解除する";
+        }
+      });
+
+      function lockVault() {
+        generatedValue = "";
+        generated.textContent = "生成ボタンを押してください";
+        copyGenerated.disabled = true;
+        toggleGenerated.disabled = true;
+        showAuth(storedVault() ? "unlock" : "setup");
+      }
+
+      function resetDemo() {
+        if (!window.confirm("このページに保存したデモデータだけを削除します。よろしいですか？")) return;
+        try { localStorage.removeItem(STORAGE_KEY); } catch { /* 保存できない環境では何もしない */ }
+        document.getElementById("setup-form").reset();
+        document.getElementById("unlock-form").reset();
+        document.getElementById("setup-error").textContent = "";
+        document.getElementById("unlock-error").textContent = "";
+        showAuth("setup");
+      }
+
+      document.getElementById("lock").addEventListener("click", lockVault);
+      document.getElementById("lock-bottom").addEventListener("click", lockVault);
+      document.getElementById("reset").addEventListener("click", resetDemo);
+      document.getElementById("reset-from-auth").addEventListener("click", resetDemo);
+      document.getElementById("generate").addEventListener("click", makePassword);
+      document.getElementById("copy-generated").addEventListener("click", () => {
+        if (generatedValue) copyText(generatedValue, "生成した架空パスワードをコピーしました。");
+      });
+      document.getElementById("toggle-generated").addEventListener("click", () => {
+        if (!generatedValue) return;
+        generatedHidden = !generatedHidden;
+        generated.textContent = generatedHidden ? "••••••••••••••••••••" : generatedValue;
+        toggleGenerated.textContent = generatedHidden ? "見る" : "隠す";
+        toggleGenerated.setAttribute("aria-pressed", String(generatedHidden));
+      });
+      document.getElementById("length").addEventListener("change", makePassword);
+      document.getElementById("symbols").addEventListener("change", makePassword);
+
+      if (!window.crypto || !window.crypto.subtle) {
+        document.getElementById("setup-error").textContent = "このブラウザは暗号化機能に対応していないため、デモを利用できません。";
+        document.querySelector('#setup-form button[type="submit"]').disabled = true;
+      }
+      showAuth(storedVault() ? "unlock" : "setup");
+    })();
+  </script>
+</body>
+</html>

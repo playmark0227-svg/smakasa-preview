@@ -4,43 +4,85 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <meta name="robots" content="noindex,nofollow,noarchive">
-  <title>スマカサ プレビュー</title>
+  <meta name="theme-color" content="#eef4f1">
+  <title>サービス一式｜UIプレビュー</title>
   <style>
-    :root { color-scheme: light; font-family: -apple-system, BlinkMacSystemFont, "Hiragino Sans", "Yu Gothic", sans-serif; }
-    * { box-sizing: border-box; }
-    body { margin: 0; min-height: 100vh; color: #17211e; background: #f1f5f3; }
-    main { width: min(920px, calc(100% - 40px)); margin: 0 auto; padding: 72px 0; }
-    .eyebrow { margin: 0 0 14px; color: #286e5c; font-size: 13px; font-weight: 700; letter-spacing: .14em; }
-    h1 { margin: 0; font-size: clamp(34px, 7vw, 64px); letter-spacing: -.04em; }
-    .lead { max-width: 660px; margin: 20px 0 42px; color: #53605c; font-size: 17px; line-height: 1.8; }
-    .grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px; }
-    a { display: flex; min-height: 230px; padding: 28px; flex-direction: column; justify-content: space-between; color: inherit; background: #fff; border: 1px solid #d8e0dd; border-radius: 24px; box-shadow: 0 12px 36px rgba(28, 58, 49, .07); text-decoration: none; transition: transform .18s ease, box-shadow .18s ease; }
-    a:hover { transform: translateY(-3px); box-shadow: 0 18px 44px rgba(28, 58, 49, .12); }
-    .num { color: #2d7663; font-size: 14px; font-weight: 700; }
-    h2 { margin: 0 0 10px; font-size: 27px; }
-    .desc { margin: 0; color: #66716e; line-height: 1.7; }
-    .open { align-self: flex-end; color: #216a57; font-weight: 700; }
-    footer { margin-top: 30px; color: #7a8581; font-size: 12px; }
-    @media (max-width: 660px) { main { padding: 48px 0; } .grid { grid-template-columns: 1fr; } a { min-height: 200px; } }
+    :root{color-scheme:light;font-family:-apple-system,BlinkMacSystemFont,"Hiragino Sans","Yu Gothic UI",Meiryo,sans-serif;--ink:#14201d;--sub:#5f6d69;--green:#176b54;--line:#d7e1dd;--paper:#fff}
+    *{box-sizing:border-box}
+    body{margin:0;min-height:100vh;color:var(--ink);background:radial-gradient(circle at 8% 0,#d9eee7 0,transparent 34%),radial-gradient(circle at 95% 30%,#e3e8ff 0,transparent 30%),#eef4f1}
+    main{width:min(1120px,calc(100% - 36px));margin:0 auto;padding:68px 0 80px}
+    .top{display:flex;align-items:flex-start;justify-content:space-between;gap:28px;margin-bottom:48px}
+    .eyebrow{margin:0 0 12px;color:var(--green);font-size:12px;font-weight:800;letter-spacing:.16em}
+    h1{margin:0;font-size:clamp(38px,7vw,76px);line-height:1.02;letter-spacing:-.055em}
+    .lead{max-width:700px;margin:22px 0 0;color:var(--sub);font-size:17px;line-height:1.9}
+    .stamp{flex:0 0 auto;padding:10px 14px;border:1px solid rgba(23,107,84,.25);border-radius:999px;background:rgba(255,255,255,.6);color:var(--green);font-size:12px;font-weight:800;letter-spacing:.06em}
+    .group-title{display:flex;align-items:center;gap:12px;margin:34px 0 16px;font-size:14px;color:#52605c}.group-title:after{height:1px;flex:1;background:rgba(20,32,29,.12);content:""}
+    .grid{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:16px}
+    .card{position:relative;display:flex;min-height:245px;overflow:hidden;padding:25px;flex-direction:column;justify-content:space-between;color:inherit;background:rgba(255,255,255,.88);border:1px solid rgba(23,63,50,.1);border-radius:24px;box-shadow:0 16px 46px rgba(29,61,51,.07);text-decoration:none;transition:transform .18s ease,box-shadow .18s ease,border-color .18s ease}
+    .card:hover{transform:translateY(-4px);border-color:rgba(23,107,84,.3);box-shadow:0 22px 54px rgba(29,61,51,.13)}
+    .primary{grid-column:span 2}.wide{grid-column:span 3;min-height:190px}
+    .icon{display:grid;width:48px;height:48px;place-items:center;border-radius:15px;background:#e5f4ee;color:var(--green);font-size:21px;font-weight:800}.purple .icon{background:#eeebff;color:#5747b8}.blue .icon{background:#e5f2ff;color:#1767ae}.orange .icon{background:#fff0df;color:#a95d16}.ink .icon{background:#e8ecee;color:#34454b}
+    .tag{position:absolute;right:20px;top:20px;padding:5px 9px;border-radius:999px;background:#eff4f2;color:#5d6d68;font-size:10px;font-weight:800;letter-spacing:.08em}
+    h2{margin:24px 0 8px;font-size:24px;line-height:1.25;letter-spacing:-.025em}
+    .desc{margin:0;color:var(--sub);font-size:14px;line-height:1.7}
+    .open{align-self:flex-end;margin-top:20px;color:var(--green);font-size:14px;font-weight:800}
+    .note{margin:32px 0 0;padding:18px 20px;border:1px solid rgba(23,107,84,.14);border-radius:18px;background:rgba(255,255,255,.52);color:#55625f;font-size:13px;line-height:1.75}
+    footer{margin-top:28px;color:#78847f;font-size:12px}
+    @media(max-width:900px){.primary{grid-column:span 3}.wide{grid-column:span 3}}
+    @media(max-width:640px){main{width:min(100% - 24px,480px);padding:42px 0 60px}.top{display:block}.stamp{display:inline-block;margin-top:22px}.grid{grid-template-columns:1fr}.primary,.wide{grid-column:auto;min-height:210px}.card{padding:22px}h2{font-size:22px}}
   </style>
 </head>
 <body>
   <main>
-    <p class="eyebrow">PREVIEW</p>
-    <h1>スマカサ</h1>
-    <p class="lead">提案用デモと設計資料を、ブラウザで確認できます。内容は検討中のプレビューです。</p>
+    <div class="top">
+      <div>
+        <p class="eyebrow">INTERACTIVE UI PREVIEW</p>
+        <h1>5つの画面を、<br>ひとつずつ。</h1>
+        <p class="lead">テレアポでご案内する3つのWebアプリ、一括申込・決済LP、代理店管理画面を個別に確認できます。スマートフォンでもそのまま操作できます。</p>
+      </div>
+      <span class="stamp">GITHUB PAGES · DEMO</span>
+    </div>
+
+    <div class="group-title">お客様向けWebアプリ</div>
     <div class="grid">
-      <a href="./proposal/">
-        <span class="num">01</span>
-        <div><h2>提案デモ</h2><p class="desc">お客様向け画面と管理画面のイメージを確認します。</p></div>
-        <span class="open">開く →</span>
+      <a class="card primary" href="./cleaner/">
+        <span class="icon">G</span><span class="tag">APP 01</span>
+        <div><h2>ガベット君</h2><p class="desc">広告・追跡用として登録された通信を減らし、実測した回数を確認する画面。</p></div>
+        <span class="open">操作する →</span>
       </a>
-      <a href="./design/">
-        <span class="num">02</span>
-        <div><h2>設計書</h2><p class="desc">サービスの前提、構成、運用、法務上の検討事項を確認します。</p></div>
-        <span class="open">開く →</span>
+      <a class="card primary blue" href="./wifi/">
+        <span class="icon">Wi</span><span class="tag">APP 02</span>
+        <div><h2>Wi‑Fiチェック</h2><p class="desc">ブラウザから分かる4項目を、その場で確かめる診断画面。</p></div>
+        <span class="open">操作する →</span>
+      </a>
+      <a class="card primary purple" href="./password/">
+        <span class="icon">••</span><span class="tag">APP 03</span>
+        <div><h2>パスワード保管庫</h2><p class="desc">端末内だけで暗号化して扱う、パスワード作成・確認画面のデモ。</p></div>
+        <span class="open">操作する →</span>
       </a>
     </div>
+
+    <div class="group-title">申込・販売管理</div>
+    <div class="grid">
+      <a class="card wide orange" href="./signup/">
+        <span class="icon">✓</span><span class="tag">CUSTOMER FLOW</span>
+        <div><h2>一括申込・決済LP</h2><p class="desc">サービス選択から情報入力、サービス別同意、カード登録、ホーム画面追加までの疑似フロー。</p></div>
+        <span class="open">フローを試す →</span>
+      </a>
+      <a class="card wide ink" href="./admin/">
+        <span class="icon">▥</span><span class="tag">AGENCY CONSOLE</span>
+        <div><h2>代理店管理画面</h2><p class="desc">顧客進捗、代理店・サービス別実績、申込状況を確認するダッシュボード。</p></div>
+        <span class="open">画面を見る →</span>
+      </a>
+    </div>
+
+    <div class="group-title">補足資料</div>
+    <div class="grid">
+      <a class="card wide" href="./proposal/"><span class="icon">↗</span><span class="tag">PRESENTATION</span><div><h2>提案デモ</h2><p class="desc">サービスの見せ方と利用シーンをまとめた提案用ページ。</p></div><span class="open">開く →</span></a>
+      <a class="card wide" href="./design/"><span class="icon">≡</span><span class="tag">DOCUMENT</span><div><h2>設計書</h2><p class="desc">構成、運用、プライバシー、法務上の検討事項を確認する資料。</p></div><span class="open">開く →</span></a>
+    </div>
+
+    <p class="note"><strong>プレビューについて：</strong> 表示する人物・契約・数値はすべて架空です。決済、SMS送信、契約登録、通信診断は行いません。実際のパスワードや個人情報は入力しないでください。</p>
     <footer>検索エンジン向けのインデックス登録を抑止しています。</footer>
   </main>
 </body>

@@ -1,0 +1,769 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex,nofollow,noarchive">
+  <meta name="theme-color" content="#f7f8fc">
+  <title>サービス一括申込｜UIデモ</title>
+  <style>
+    :root {
+      --ink: #172033;
+      --muted: #667085;
+      --line: #e5e9f0;
+      --surface: #ffffff;
+      --canvas: #f6f7fb;
+      --blue: #3157d5;
+      --blue-dark: #2343ac;
+      --blue-soft: #edf2ff;
+      --green: #159570;
+      --green-soft: #e8f8f2;
+      --amber: #a96300;
+      --amber-soft: #fff5df;
+      --danger: #c0392b;
+      --shadow: 0 20px 52px rgba(23, 32, 51, .10);
+      --radius: 20px;
+    }
+
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      min-width: 320px;
+      color: var(--ink);
+      background:
+        radial-gradient(circle at 8% 0%, rgba(49, 87, 213, .08), transparent 28rem),
+        var(--canvas);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans JP", Meiryo, sans-serif;
+      line-height: 1.65;
+      -webkit-font-smoothing: antialiased;
+    }
+    button, input { font: inherit; }
+    button, label { -webkit-tap-highlight-color: transparent; }
+    a { color: inherit; }
+
+    .demo-strip {
+      padding: 10px 18px;
+      color: #fff;
+      background: #172033;
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: .06em;
+      text-align: center;
+    }
+    .demo-strip strong {
+      display: inline-block;
+      margin-right: 8px;
+      padding: 1px 8px;
+      color: #172033;
+      background: #fff;
+      border-radius: 999px;
+      font-size: 10px;
+      letter-spacing: .12em;
+    }
+
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 20px;
+      width: min(1120px, calc(100% - 32px));
+      margin: 0 auto;
+      padding: 22px 0;
+    }
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-weight: 800;
+      letter-spacing: .03em;
+    }
+    .brand-mark {
+      display: grid;
+      width: 36px;
+      height: 36px;
+      place-items: center;
+      color: #fff;
+      background: linear-gradient(135deg, #3157d5, #6f77ef);
+      border-radius: 12px;
+      box-shadow: 0 8px 22px rgba(49, 87, 213, .25);
+    }
+    .back-link {
+      color: var(--muted);
+      font-size: 13px;
+      font-weight: 700;
+      text-decoration: none;
+    }
+    .back-link:hover { color: var(--blue); }
+
+    .shell {
+      width: min(1040px, calc(100% - 32px));
+      margin: 12px auto 72px;
+    }
+    .intro {
+      margin-bottom: 28px;
+      text-align: center;
+    }
+    .eyebrow {
+      margin: 0 0 8px;
+      color: var(--blue);
+      font-size: 12px;
+      font-weight: 800;
+      letter-spacing: .15em;
+    }
+    h1 {
+      margin: 0;
+      font-size: clamp(28px, 4vw, 42px);
+      line-height: 1.25;
+      letter-spacing: -.03em;
+    }
+    .intro p:last-child {
+      margin: 10px auto 0;
+      max-width: 660px;
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    .stepper {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 8px;
+      margin-bottom: 16px;
+    }
+    .step-indicator {
+      position: relative;
+      padding: 12px 6px 10px;
+      color: #8a93a3;
+      background: rgba(255,255,255,.72);
+      border: 1px solid var(--line);
+      border-radius: 13px;
+      font-size: 11px;
+      font-weight: 700;
+      text-align: center;
+    }
+    .step-indicator::before {
+      content: attr(data-number);
+      display: grid;
+      width: 22px;
+      height: 22px;
+      margin: 0 auto 4px;
+      place-items: center;
+      color: inherit;
+      background: #edf0f5;
+      border-radius: 50%;
+      font-size: 10px;
+    }
+    .step-indicator.is-active {
+      color: var(--blue);
+      background: #fff;
+      border-color: #aebdf0;
+      box-shadow: 0 6px 20px rgba(49,87,213,.08);
+    }
+    .step-indicator.is-active::before { color: #fff; background: var(--blue); }
+    .step-indicator.is-done { color: var(--green); }
+    .step-indicator.is-done::before { content: "✓"; color: #fff; background: var(--green); }
+
+    .card {
+      overflow: hidden;
+      background: var(--surface);
+      border: 1px solid rgba(222, 227, 237, .9);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+    }
+    .panel { display: none; padding: clamp(24px, 5vw, 48px); }
+    .panel.is-active { display: block; animation: rise .24s ease-out; }
+    @keyframes rise { from { opacity: 0; transform: translateY(6px); } }
+    .panel-heading {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 24px;
+      margin-bottom: 28px;
+    }
+    .step-label {
+      display: block;
+      margin-bottom: 4px;
+      color: var(--blue);
+      font-size: 11px;
+      font-weight: 800;
+      letter-spacing: .15em;
+    }
+    h2 {
+      margin: 0;
+      font-size: clamp(22px, 3vw, 30px);
+      line-height: 1.35;
+      letter-spacing: -.02em;
+    }
+    .panel-heading p {
+      margin: 7px 0 0;
+      color: var(--muted);
+      font-size: 13px;
+    }
+    .secure-chip {
+      flex: 0 0 auto;
+      padding: 7px 11px;
+      color: var(--green);
+      background: var(--green-soft);
+      border-radius: 999px;
+      font-size: 11px;
+      font-weight: 800;
+    }
+
+    .services {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 14px;
+    }
+    .service-option { position: relative; }
+    .service-option input {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      opacity: 0;
+    }
+    .service-card {
+      display: flex;
+      min-height: 236px;
+      padding: 20px;
+      flex-direction: column;
+      cursor: pointer;
+      background: #fbfcfe;
+      border: 2px solid var(--line);
+      border-radius: 17px;
+      transition: border .16s, transform .16s, box-shadow .16s;
+    }
+    .service-card:hover { transform: translateY(-2px); border-color: #c3ccef; }
+    .service-option input:focus-visible + .service-card { outline: 3px solid rgba(49,87,213,.22); }
+    .service-option input:checked + .service-card {
+      background: linear-gradient(180deg, #fff, #f6f8ff);
+      border-color: var(--blue);
+      box-shadow: 0 12px 28px rgba(49,87,213,.10);
+    }
+    .service-top { display: flex; align-items: center; justify-content: space-between; }
+    .service-icon {
+      display: grid;
+      width: 46px;
+      height: 46px;
+      place-items: center;
+      color: var(--blue);
+      background: var(--blue-soft);
+      border-radius: 14px;
+      font-size: 21px;
+      font-weight: 900;
+    }
+    .checkmark {
+      display: grid;
+      width: 24px;
+      height: 24px;
+      place-items: center;
+      color: transparent;
+      background: #fff;
+      border: 2px solid #d5dae4;
+      border-radius: 50%;
+      font-size: 13px;
+      font-weight: 900;
+    }
+    input:checked + .service-card .checkmark { color: #fff; background: var(--blue); border-color: var(--blue); }
+    .service-card h3 { margin: 18px 0 5px; font-size: 17px; line-height: 1.45; }
+    .service-card p { margin: 0 0 16px; color: var(--muted); font-size: 12px; }
+    .price { margin-top: auto; font-size: 20px; font-weight: 800; }
+    .price small { margin-left: 2px; color: var(--muted); font-size: 11px; font-weight: 600; }
+
+    .total-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-top: 18px;
+      padding: 18px 20px;
+      background: #f7f9fc;
+      border-radius: 14px;
+    }
+    .total-row span { color: var(--muted); font-size: 13px; }
+    .total-row strong { color: var(--blue); font-size: 25px; }
+    .total-row strong small { font-size: 12px; color: var(--muted); }
+
+    .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 17px; }
+    .field.full { grid-column: 1 / -1; }
+    .field label { display: block; margin-bottom: 6px; font-size: 12px; font-weight: 800; }
+    .field em { margin-left: 6px; color: var(--danger); font-size: 10px; font-style: normal; }
+    .field input {
+      width: 100%;
+      padding: 13px 14px;
+      color: var(--ink);
+      background: #fff;
+      border: 1px solid #cfd5df;
+      border-radius: 10px;
+      outline: none;
+      transition: border .15s, box-shadow .15s;
+    }
+    .field input:focus { border-color: var(--blue); box-shadow: 0 0 0 3px rgba(49,87,213,.12); }
+    .field .hint { margin: 5px 0 0; color: #8a93a3; font-size: 10px; }
+    .privacy-note {
+      display: flex;
+      gap: 10px;
+      margin-top: 20px;
+      padding: 13px 15px;
+      color: #536074;
+      background: #f7f9fc;
+      border-radius: 11px;
+      font-size: 11px;
+    }
+
+    .consent-list { display: grid; gap: 12px; }
+    .consent-box {
+      display: grid;
+      grid-template-columns: auto 1fr;
+      gap: 13px;
+      padding: 17px;
+      cursor: pointer;
+      background: #fbfcfe;
+      border: 1px solid var(--line);
+      border-radius: 13px;
+    }
+    .consent-box:hover { border-color: #b9c4e9; }
+    .consent-box input { width: 20px; height: 20px; margin: 2px 0 0; accent-color: var(--blue); }
+    .consent-box strong { display: block; font-size: 14px; }
+    .consent-box span { display: block; margin-top: 3px; color: var(--muted); font-size: 11px; }
+    .terms-preview {
+      max-height: 110px;
+      margin-top: 16px;
+      padding: 14px 16px;
+      overflow: auto;
+      color: #687387;
+      background: #f7f9fc;
+      border: 1px solid var(--line);
+      border-radius: 11px;
+      font-size: 10px;
+    }
+
+    .payment-shell {
+      display: grid;
+      grid-template-columns: minmax(0, 1.2fr) minmax(240px, .8fr);
+      gap: 18px;
+    }
+    .payment-card, .summary-card {
+      padding: 24px;
+      background: #fbfcfe;
+      border: 1px solid var(--line);
+      border-radius: 16px;
+    }
+    .payment-visual {
+      display: grid;
+      width: 58px;
+      height: 58px;
+      margin-bottom: 16px;
+      place-items: center;
+      color: #fff;
+      background: linear-gradient(145deg, #3157d5, #7d72e8);
+      border-radius: 18px;
+      font-size: 25px;
+      box-shadow: 0 12px 25px rgba(49,87,213,.22);
+    }
+    .payment-card h3, .summary-card h3 { margin: 0 0 8px; font-size: 17px; }
+    .payment-card p, .summary-card p { margin: 0; color: var(--muted); font-size: 12px; }
+    .payment-button {
+      width: 100%;
+      margin-top: 20px;
+      padding: 13px 18px;
+      color: #fff;
+      background: var(--blue);
+      border: 0;
+      border-radius: 10px;
+      cursor: pointer;
+      font-weight: 800;
+    }
+    .payment-button:hover { background: var(--blue-dark); }
+    .payment-button.is-complete { color: var(--green); background: var(--green-soft); cursor: default; }
+    .summary-list { margin: 16px 0 0; padding: 0; list-style: none; }
+    .summary-list li { display: flex; justify-content: space-between; gap: 12px; padding: 8px 0; border-bottom: 1px solid var(--line); font-size: 12px; }
+    .summary-list li:last-child { border: 0; }
+
+    .complete-mark {
+      display: grid;
+      width: 70px;
+      height: 70px;
+      margin: 0 auto 15px;
+      place-items: center;
+      color: #fff;
+      background: var(--green);
+      border-radius: 50%;
+      box-shadow: 0 14px 30px rgba(21,149,112,.22);
+      font-size: 28px;
+      font-weight: 900;
+    }
+    .complete-copy { margin-bottom: 26px; text-align: center; }
+    .install-layout { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    .install-card { padding: 20px; border: 1px solid var(--line); border-radius: 15px; }
+    .install-card h3 { margin: 0 0 12px; font-size: 15px; }
+    .install-card ol { margin: 0; padding-left: 21px; color: var(--muted); font-size: 12px; }
+    .install-card li + li { margin-top: 7px; }
+    .app-icons { display: flex; flex-wrap: wrap; justify-content: center; gap: 18px; margin: 26px 0 5px; }
+    .app-icon { width: 78px; color: var(--muted); font-size: 10px; font-weight: 700; text-align: center; }
+    .app-icon span {
+      display: grid;
+      width: 56px;
+      height: 56px;
+      margin: 0 auto 7px;
+      place-items: center;
+      color: #fff;
+      background: linear-gradient(145deg, #3157d5, #7387f3);
+      border-radius: 15px;
+      box-shadow: 0 8px 18px rgba(49,87,213,.18);
+      font-size: 22px;
+    }
+
+    .error {
+      display: none;
+      margin: 0 0 18px;
+      padding: 11px 14px;
+      color: #9d3027;
+      background: #fff0ee;
+      border-radius: 9px;
+      font-size: 12px;
+      font-weight: 700;
+    }
+    .error.is-visible { display: block; }
+    .actions {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-top: 28px;
+      padding-top: 22px;
+      border-top: 1px solid var(--line);
+    }
+    .button {
+      min-width: 132px;
+      padding: 12px 20px;
+      border: 0;
+      border-radius: 10px;
+      cursor: pointer;
+      font-weight: 800;
+    }
+    .button-primary { color: #fff; background: var(--blue); box-shadow: 0 8px 18px rgba(49,87,213,.18); }
+    .button-primary:hover { background: var(--blue-dark); }
+    .button-primary:disabled { opacity: .45; cursor: not-allowed; box-shadow: none; }
+    .button-ghost { color: var(--muted); background: #f0f2f6; }
+    .button-ghost:hover { color: var(--ink); }
+    .fineprint {
+      margin: 18px auto 0;
+      max-width: 800px;
+      color: #7d8798;
+      font-size: 10px;
+      text-align: center;
+    }
+
+    .toast {
+      position: fixed;
+      z-index: 20;
+      right: 18px;
+      bottom: 18px;
+      max-width: min(360px, calc(100% - 36px));
+      padding: 13px 16px;
+      color: #fff;
+      background: #172033;
+      border-radius: 12px;
+      box-shadow: 0 15px 40px rgba(0,0,0,.22);
+      font-size: 12px;
+      font-weight: 700;
+      opacity: 0;
+      pointer-events: none;
+      transform: translateY(12px);
+      transition: opacity .2s, transform .2s;
+    }
+    .toast.is-visible { opacity: 1; transform: none; }
+
+    @media (max-width: 760px) {
+      .shell { width: min(100% - 20px, 600px); margin-top: 0; }
+      .topbar { width: calc(100% - 24px); padding: 15px 0; }
+      .intro { text-align: left; }
+      .intro p:last-child { margin-left: 0; }
+      .stepper { gap: 4px; }
+      .step-indicator { min-height: 7px; padding: 0; overflow: hidden; color: transparent; background: #dfe3eb; border: 0; border-radius: 999px; font-size: 0; }
+      .step-indicator::before { display: none; }
+      .step-indicator.is-active { background: var(--blue); box-shadow: none; }
+      .step-indicator.is-done { background: var(--green); }
+      .panel { padding: 24px 18px; }
+      .panel-heading { display: block; }
+      .secure-chip { display: inline-block; margin-top: 12px; }
+      .services, .form-grid, .payment-shell, .install-layout { grid-template-columns: 1fr; }
+      .service-card { min-height: 190px; }
+      .field.full { grid-column: auto; }
+      .actions { position: sticky; bottom: 0; margin: 25px -18px -24px; padding: 14px 18px; background: rgba(255,255,255,.94); backdrop-filter: blur(10px); }
+      .button { min-width: 110px; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { scroll-behavior: auto !important; animation: none !important; transition: none !important; }
+    }
+  </style>
+</head>
+<body>
+  <div class="demo-strip"><strong>DEMO</strong>UIプレビューです。入力内容は保存・送信されず、契約や決済も発生しません。</div>
+
+  <header class="topbar">
+    <div class="brand"><span class="brand-mark" aria-hidden="true">✓</span><span>サービス一括申込</span></div>
+    <a class="back-link" href="../">← プレビュー一覧へ</a>
+  </header>
+
+  <main class="shell">
+    <div class="intro">
+      <p class="eyebrow">かんたん一括お申し込み</p>
+      <h1>スマホの安心を、ひとつの窓口で。</h1>
+      <p>必要なサービスを選び、案内に沿って進むだけ。約3分でお手続きの流れを確認できます。</p>
+    </div>
+
+    <nav class="stepper" aria-label="お申し込みの進捗">
+      <div class="step-indicator is-active" data-number="1">サービス選択</div>
+      <div class="step-indicator" data-number="2">お客さま情報</div>
+      <div class="step-indicator" data-number="3">ご同意</div>
+      <div class="step-indicator" data-number="4">お支払い</div>
+      <div class="step-indicator" data-number="5">設定案内</div>
+    </nav>
+
+    <form class="card" id="demo-form" novalidate>
+      <section class="panel is-active" data-step="1" aria-labelledby="title-1">
+        <div class="panel-heading">
+          <div><span class="step-label">STEP 01</span><h2 id="title-1">サービスを選択</h2><p>必要なものだけ選べます。あとから変更も可能です。</p></div>
+          <span class="secure-chip">3サービスから選択</span>
+        </div>
+        <div class="error" id="error-1" role="alert">1つ以上のサービスを選択してください。</div>
+        <div class="services">
+          <div class="service-option">
+            <input type="checkbox" id="product-cleaner" name="product" value="cleaner" data-label="ガベット君" data-price="500" checked>
+            <label class="service-card" for="product-cleaner">
+              <span class="service-top"><span class="service-icon" aria-hidden="true">✦</span><span class="checkmark">✓</span></span>
+              <h3>ガベット君</h3><p>広告・追跡用として登録された通信を減らし、実測回数を確認。</p>
+              <span class="price">500円<small>/ 月（税込）</small></span>
+            </label>
+          </div>
+          <div class="service-option">
+            <input type="checkbox" id="product-wifi" name="product" value="wifi" data-label="Wi-Fiチェック" data-price="300" checked>
+            <label class="service-card" for="product-wifi">
+              <span class="service-top"><span class="service-icon" aria-hidden="true">Wi</span><span class="checkmark">✓</span></span>
+              <h3>Wi-Fiチェック</h3><p>通信方式など、ブラウザから確認できる範囲をわかりやすく表示。</p>
+              <span class="price">300円<small>/ 月（税込）</small></span>
+            </label>
+          </div>
+          <div class="service-option">
+            <input type="checkbox" id="product-vault" name="product" value="vault" data-label="パスワード保管庫" data-price="300" checked>
+            <label class="service-card" for="product-vault">
+              <span class="service-top"><span class="service-icon" aria-hidden="true">◇</span><span class="checkmark">✓</span></span>
+              <h3>パスワード保管庫</h3><p>大切なログイン情報を、端末内で整理して確認しやすく。</p>
+              <span class="price">300円<small>/ 月（税込）</small></span>
+            </label>
+          </div>
+        </div>
+        <div class="total-row"><span>選択中の月額合計</span><strong id="total-price">1,100円<small>（税込）</small></strong></div>
+        <div class="actions"><span></span><button class="button button-primary next" type="button">次へ進む</button></div>
+      </section>
+
+      <section class="panel" data-step="2" aria-labelledby="title-2">
+        <div class="panel-heading">
+          <div><span class="step-label">STEP 02</span><h2 id="title-2">お客さま情報</h2><p>デモ用の架空情報を入力済みです。実在する個人情報は入力しないでください。</p></div>
+          <span class="secure-chip">デモデータ</span>
+        </div>
+        <div class="error" id="error-2" role="alert">未入力の項目を確認してください。</div>
+        <div class="form-grid">
+          <div class="field"><label for="family-name">姓<em>必須</em></label><input id="family-name" name="family-name" value="デモ" autocomplete="off" required></div>
+          <div class="field"><label for="given-name">名<em>必須</em></label><input id="given-name" name="given-name" value="太郎" autocomplete="off" required></div>
+          <div class="field"><label for="phone">電話番号<em>必須</em></label><input id="phone" name="phone" value="000-0000-0000" inputmode="tel" autocomplete="off" required><p class="hint">架空番号です</p></div>
+          <div class="field"><label for="email">メールアドレス<em>必須</em></label><input id="email" name="email" value="demo@example.invalid" type="email" autocomplete="off" required><p class="hint">送信には使用されません</p></div>
+          <div class="field"><label for="postal">郵便番号<em>必須</em></label><input id="postal" name="postal" value="000-0000" inputmode="numeric" autocomplete="off" required></div>
+          <div class="field"><label for="prefecture">都道府県<em>必須</em></label><input id="prefecture" name="prefecture" value="デモ県" autocomplete="off" required></div>
+          <div class="field full"><label for="address">市区町村・番地<em>必須</em></label><input id="address" name="address" value="サンプル市1-2-3 デモマンション101" autocomplete="off" required></div>
+        </div>
+        <div class="privacy-note"><span aria-hidden="true">ⓘ</span><span>この画面は静的なUIデモです。入力内容はブラウザ内で一時表示するだけで、サーバーへの送信や保存は行いません。</span></div>
+        <div class="actions"><button class="button button-ghost prev" type="button">戻る</button><button class="button button-primary next" type="button">内容を確認</button></div>
+      </section>
+
+      <section class="panel" data-step="3" aria-labelledby="title-3">
+        <div class="panel-heading">
+          <div><span class="step-label">STEP 03</span><h2 id="title-3">利用条件へのご同意</h2><p>選択したサービスごとに内容を確認し、チェックしてください。</p></div>
+          <span class="secure-chip">個別に確認</span>
+        </div>
+        <div class="error" id="error-3" role="alert">すべての同意項目にチェックしてください。</div>
+        <div class="consent-list" id="consent-list"></div>
+        <div class="terms-preview" tabindex="0">【デモ表示】本欄には、本番サービスで適用される利用規約、重要事項説明、料金・解約条件、個人情報の取り扱いに関する案内が表示されます。このプレビュー上の文章は契約条件ではなく、チェック操作によって契約が成立することもありません。</div>
+        <div class="actions"><button class="button button-ghost prev" type="button">戻る</button><button class="button button-primary next" type="button">お支払いへ</button></div>
+      </section>
+
+      <section class="panel" data-step="4" aria-labelledby="title-4">
+        <div class="panel-heading">
+          <div><span class="step-label">STEP 04</span><h2 id="title-4">お支払い方法の登録</h2><p>本番想定では決済事業者の外部画面へ移動します。このデモでは画面遷移を再現するだけです。</p></div>
+          <span class="secure-chip">カード情報は入力しません</span>
+        </div>
+        <div class="error" id="error-4" role="alert">デモ決済登録を完了してください。</div>
+        <div class="payment-shell">
+          <div class="payment-card">
+            <div class="payment-visual" aria-hidden="true">↗</div>
+            <h3>外部の決済登録画面を利用</h3>
+            <p>カード番号などの情報は、このサイトでは取得しません。実装時は決済事業者の画面で登録する設計を想定しています。</p>
+            <button class="payment-button" id="payment-button" type="button">外部決済画面を開く（デモ）</button>
+          </div>
+          <aside class="summary-card">
+            <h3>お申し込み内容</h3><p>初回請求前に最終確認できます。</p>
+            <ul class="summary-list" id="payment-summary"></ul>
+          </aside>
+        </div>
+        <div class="actions"><button class="button button-ghost prev" type="button">戻る</button><button class="button button-primary next" id="to-complete" type="button" disabled>登録を完了する</button></div>
+      </section>
+
+      <section class="panel" data-step="5" aria-labelledby="title-5">
+        <div class="complete-copy">
+          <div class="complete-mark" aria-hidden="true">✓</div>
+          <span class="step-label">STEP 05</span><h2 id="title-5">デモのお申し込みが完了しました</h2>
+          <p>最後に、ホーム画面へ追加する流れをご確認ください。</p>
+        </div>
+        <div class="app-icons" id="app-icons"></div>
+        <div class="install-layout">
+          <div class="install-card"><h3>iPhone / Safari</h3><ol><li>画面下部の共有ボタンをタップ</li><li>「ホーム画面に追加」を選択</li><li>表示名を確認して「追加」</li></ol></div>
+          <div class="install-card"><h3>Android / Chrome</h3><ol><li>右上のメニューをタップ</li><li>「アプリをインストール」または「ホーム画面に追加」</li><li>確認画面で「追加」</li></ol></div>
+        </div>
+        <div class="privacy-note"><span aria-hidden="true">ⓘ</span><span>これは設置手順のUIプレビューです。実際のアプリ、構成プロファイル、Webクリップはダウンロードされません。</span></div>
+        <div class="actions"><button class="button button-ghost" id="restart" type="button">最初から見る</button><a class="button button-primary" href="../" style="text-align:center;text-decoration:none">一覧へ戻る</a></div>
+      </section>
+    </form>
+
+    <p class="fineprint">本ページは画面設計確認用の静的デモです。顧客情報の保存、SMS送信、代理店判定、契約作成、決済登録、アプリ配布などのバックエンド機能は実行されません。</p>
+  </main>
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+  <script>
+    (() => {
+      'use strict';
+      const panels = [...document.querySelectorAll('.panel')];
+      const indicators = [...document.querySelectorAll('.step-indicator')];
+      const products = [...document.querySelectorAll('input[name="product"]')];
+      const form = document.getElementById('demo-form');
+      const consentList = document.getElementById('consent-list');
+      const totalPrice = document.getElementById('total-price');
+      const paymentSummary = document.getElementById('payment-summary');
+      const appIcons = document.getElementById('app-icons');
+      const paymentButton = document.getElementById('payment-button');
+      const completeButton = document.getElementById('to-complete');
+      const toast = document.getElementById('toast');
+      let step = 1;
+      let paymentComplete = false;
+
+      const selectedProducts = () => products.filter((input) => input.checked);
+      const money = (value) => Number(value).toLocaleString('ja-JP') + '円';
+
+      function renderSelection() {
+        const selected = selectedProducts();
+        const total = selected.reduce((sum, input) => sum + Number(input.dataset.price), 0);
+        totalPrice.innerHTML = money(total) + '<small>（税込）</small>';
+        paymentSummary.innerHTML = selected.map((input) =>
+          '<li><span>' + input.dataset.label + '</span><strong>' + money(input.dataset.price) + '</strong></li>'
+        ).join('') + '<li><span>月額合計（税込）</span><strong>' + money(total) + '</strong></li>';
+        consentList.innerHTML = selected.map((input) =>
+          '<label class="consent-box"><input type="checkbox" class="consent" value="' + input.value + '"><span><strong>' + input.dataset.label + 'の利用条件に同意する</strong><span>利用規約・重要事項・月額' + money(input.dataset.price) + 'を確認しました。</span></span></label>'
+        ).join('');
+        const glyphs = { cleaner: '✦', wifi: 'Wi', vault: '◇' };
+        appIcons.innerHTML = selected.map((input) =>
+          '<div class="app-icon"><span aria-hidden="true">' + glyphs[input.value] + '</span>' + input.dataset.label + '</div>'
+        ).join('');
+      }
+
+      function showError(current, message) {
+        const box = document.getElementById('error-' + current);
+        if (!box) return;
+        if (message) box.textContent = message;
+        box.classList.add('is-visible');
+        box.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+
+      function clearError(current) {
+        const box = document.getElementById('error-' + current);
+        if (box) box.classList.remove('is-visible');
+      }
+
+      function validate(current) {
+        clearError(current);
+        if (current === 1 && selectedProducts().length === 0) {
+          showError(1);
+          return false;
+        }
+        if (current === 2) {
+          const fields = [...panels[1].querySelectorAll('input[required]')];
+          const missing = fields.find((field) => !field.value.trim() || !field.checkValidity());
+          if (missing) {
+            showError(2, '「' + missing.closest('.field').querySelector('label').textContent.replace('必須', '') + '」を確認してください。');
+            missing.focus();
+            return false;
+          }
+        }
+        if (current === 3) {
+          const consents = [...document.querySelectorAll('.consent')];
+          if (!consents.length || consents.some((input) => !input.checked)) {
+            showError(3);
+            return false;
+          }
+        }
+        if (current === 4 && !paymentComplete) {
+          showError(4);
+          return false;
+        }
+        return true;
+      }
+
+      function goTo(nextStep) {
+        step = Math.min(5, Math.max(1, nextStep));
+        panels.forEach((panel, index) => panel.classList.toggle('is-active', index + 1 === step));
+        indicators.forEach((item, index) => {
+          item.classList.toggle('is-active', index + 1 === step);
+          item.classList.toggle('is-done', index + 1 < step);
+        });
+        if (step === 3) renderSelection();
+        if (step === 4) renderSelection();
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      }
+
+      function announce(message) {
+        toast.textContent = message;
+        toast.classList.add('is-visible');
+        window.setTimeout(() => toast.classList.remove('is-visible'), 2600);
+      }
+
+      products.forEach((input) => input.addEventListener('change', () => {
+        renderSelection();
+        clearError(1);
+      }));
+
+      document.querySelectorAll('.next').forEach((button) => button.addEventListener('click', () => {
+        if (validate(step)) goTo(step + 1);
+      }));
+      document.querySelectorAll('.prev').forEach((button) => button.addEventListener('click', () => goTo(step - 1)));
+
+      paymentButton.addEventListener('click', () => {
+        if (paymentComplete) return;
+        paymentButton.disabled = true;
+        paymentButton.textContent = '外部決済画面を確認中…';
+        window.setTimeout(() => {
+          paymentComplete = true;
+          paymentButton.disabled = false;
+          paymentButton.classList.add('is-complete');
+          paymentButton.textContent = '✓ デモ決済登録が完了しました';
+          completeButton.disabled = false;
+          clearError(4);
+          announce('デモ処理が完了しました。実際の決済は発生していません。');
+        }, 650);
+      });
+
+      document.getElementById('restart').addEventListener('click', () => {
+        paymentComplete = false;
+        paymentButton.disabled = false;
+        paymentButton.classList.remove('is-complete');
+        paymentButton.textContent = '外部決済画面を開く（デモ）';
+        completeButton.disabled = true;
+        products.forEach((input) => { input.checked = true; });
+        renderSelection();
+        goTo(1);
+      });
+
+      form.addEventListener('submit', (event) => event.preventDefault());
+      renderSelection();
+    })();
+  </script>
+</body>
+</html>

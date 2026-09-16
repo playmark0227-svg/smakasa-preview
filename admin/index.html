@@ -1,0 +1,599 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex,nofollow,noarchive">
+  <meta name="theme-color" content="#101828">
+  <title>代理店管理画面｜UIデモ</title>
+  <style>
+    :root {
+      --nav: #101828;
+      --nav-soft: #1c2940;
+      --ink: #1d2939;
+      --muted: #667085;
+      --subtle: #98a2b3;
+      --line: #e4e7ec;
+      --canvas: #f5f7fa;
+      --surface: #fff;
+      --blue: #3157d5;
+      --blue-soft: #eef2ff;
+      --cyan: #0e8fa5;
+      --green: #16866a;
+      --green-soft: #eaf8f3;
+      --amber: #b36700;
+      --amber-soft: #fff6e6;
+      --red: #bd3d3d;
+      --red-soft: #fff0f0;
+      --violet: #7556c7;
+      --radius: 15px;
+      --shadow: 0 10px 30px rgba(16,24,40,.07);
+    }
+
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      min-width: 320px;
+      color: var(--ink);
+      background: var(--canvas);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans JP", Meiryo, sans-serif;
+      line-height: 1.55;
+      -webkit-font-smoothing: antialiased;
+    }
+    button, select, input { font: inherit; }
+    a { color: inherit; }
+
+    .demo-banner {
+      position: sticky;
+      z-index: 50;
+      top: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 9px;
+      min-height: 36px;
+      padding: 8px 16px;
+      color: #7b4b00;
+      background: #fff0c8;
+      border-bottom: 1px solid #efd696;
+      font-size: 11px;
+      font-weight: 700;
+      text-align: center;
+    }
+    .demo-banner strong {
+      padding: 2px 7px;
+      color: #fff;
+      background: #a76100;
+      border-radius: 5px;
+      font-size: 9px;
+      letter-spacing: .12em;
+    }
+
+    .app { display: grid; min-height: calc(100vh - 36px); grid-template-columns: 220px minmax(0, 1fr); }
+    .sidebar {
+      position: sticky;
+      top: 36px;
+      display: flex;
+      height: calc(100vh - 36px);
+      padding: 22px 15px;
+      color: #d2d9e6;
+      background: var(--nav);
+      flex-direction: column;
+    }
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 11px;
+      padding: 0 9px 22px;
+      color: #fff;
+      font-size: 16px;
+      font-weight: 800;
+      letter-spacing: .03em;
+    }
+    .brand-mark {
+      display: grid;
+      width: 34px;
+      height: 34px;
+      place-items: center;
+      color: #fff;
+      background: linear-gradient(145deg, #5472ef, #795fe1);
+      border-radius: 11px;
+      box-shadow: 0 8px 20px rgba(68,93,211,.25);
+    }
+    .side-label { margin: 8px 10px; color: #718096; font-size: 9px; font-weight: 800; letter-spacing: .16em; }
+    .nav-list { display: grid; gap: 4px; margin: 0; padding: 0; list-style: none; }
+    .nav-button {
+      display: flex;
+      width: 100%;
+      padding: 10px 12px;
+      align-items: center;
+      gap: 10px;
+      color: #aeb9cc;
+      background: transparent;
+      border: 0;
+      border-radius: 9px;
+      cursor: pointer;
+      font-size: 12px;
+      font-weight: 700;
+      text-align: left;
+    }
+    .nav-button:hover { color: #fff; background: rgba(255,255,255,.06); }
+    .nav-button.is-active { color: #fff; background: var(--nav-soft); }
+    .nav-icon { display: grid; width: 20px; height: 20px; place-items: center; color: #8292b2; font-size: 13px; }
+    .nav-button.is-active .nav-icon { color: #89a0ff; }
+    .sidebar-note {
+      margin-top: auto;
+      padding: 12px;
+      color: #8492a9;
+      background: rgba(255,255,255,.035);
+      border: 1px solid rgba(255,255,255,.06);
+      border-radius: 10px;
+      font-size: 9px;
+    }
+    .back-link {
+      display: block;
+      margin-top: 12px;
+      color: #aab6ca;
+      font-size: 11px;
+      font-weight: 700;
+      text-decoration: none;
+    }
+    .back-link:hover { color: #fff; }
+
+    .main { min-width: 0; }
+    .topbar {
+      display: flex;
+      min-height: 68px;
+      padding: 13px clamp(18px, 3vw, 34px);
+      align-items: center;
+      justify-content: space-between;
+      gap: 18px;
+      background: rgba(255,255,255,.94);
+      border-bottom: 1px solid var(--line);
+      backdrop-filter: blur(12px);
+    }
+    .page-title h1 { margin: 0; font-size: 19px; letter-spacing: -.02em; }
+    .page-title p { margin: 2px 0 0; color: var(--muted); font-size: 10px; }
+    .top-actions { display: flex; align-items: center; gap: 10px; }
+    .operator {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding-left: 10px;
+      border-left: 1px solid var(--line);
+      color: var(--muted);
+      font-size: 10px;
+      font-weight: 700;
+    }
+    .avatar {
+      display: grid;
+      width: 32px;
+      height: 32px;
+      place-items: center;
+      color: var(--blue);
+      background: var(--blue-soft);
+      border-radius: 50%;
+      font-size: 11px;
+      font-weight: 800;
+    }
+    .content { width: min(1420px, 100%); padding: 26px clamp(18px, 3vw, 34px) 55px; }
+
+    .toolbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      margin-bottom: 18px;
+    }
+    .filters { display: flex; flex-wrap: wrap; align-items: center; gap: 9px; }
+    .select-wrap { position: relative; }
+    .select-wrap::after { content: "⌄"; position: absolute; top: 50%; right: 11px; color: var(--muted); pointer-events: none; transform: translateY(-58%); }
+    select {
+      min-width: 165px;
+      padding: 9px 34px 9px 11px;
+      color: var(--ink);
+      background: #fff;
+      border: 1px solid #d7dce5;
+      border-radius: 9px;
+      outline: 0;
+      appearance: none;
+      font-size: 11px;
+      font-weight: 700;
+    }
+    select:focus { border-color: var(--blue); box-shadow: 0 0 0 3px rgba(49,87,213,.11); }
+    .live-control {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 11px;
+      color: var(--green);
+      background: var(--green-soft);
+      border: 1px solid #caecdf;
+      border-radius: 9px;
+      cursor: pointer;
+      font-size: 10px;
+      font-weight: 800;
+    }
+    .live-control.is-paused { color: var(--muted); background: #f2f4f7; border-color: var(--line); }
+    .live-dot { width: 7px; height: 7px; background: currentColor; border-radius: 50%; box-shadow: 0 0 0 4px rgba(22,134,106,.11); animation: pulse 1.7s infinite; }
+    .is-paused .live-dot { box-shadow: none; animation: none; }
+    @keyframes pulse { 50% { opacity: .35; } }
+    .updated { color: var(--subtle); font-size: 9px; }
+
+    .view { display: none; }
+    .view.is-active { display: block; animation: fade .18s ease-out; }
+    @keyframes fade { from { opacity: .3; } }
+
+    .kpis { display: grid; grid-template-columns: repeat(4, minmax(0,1fr)); gap: 13px; margin-bottom: 18px; }
+    .kpi-card {
+      position: relative;
+      min-height: 132px;
+      padding: 18px;
+      overflow: hidden;
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+    }
+    .kpi-card::after { content: ""; position: absolute; right: -20px; bottom: -34px; width: 90px; height: 90px; background: var(--kpi-soft, var(--blue-soft)); border-radius: 50%; }
+    .kpi-label { display: flex; justify-content: space-between; align-items: center; color: var(--muted); font-size: 10px; font-weight: 700; }
+    .kpi-icon { display: grid; width: 29px; height: 29px; place-items: center; color: var(--kpi-color, var(--blue)); background: var(--kpi-soft, var(--blue-soft)); border-radius: 9px; font-size: 12px; }
+    .kpi-value { display: block; margin-top: 12px; font-size: 28px; line-height: 1; letter-spacing: -.03em; }
+    .kpi-meta { display: block; margin-top: 8px; color: var(--subtle); font-size: 9px; }
+    .kpi-meta b { color: var(--green); }
+
+    .grid-main { display: grid; grid-template-columns: minmax(0, 1.6fr) minmax(280px, .75fr); gap: 16px; }
+    .box {
+      min-width: 0;
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+    }
+    .box-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 17px 18px; border-bottom: 1px solid var(--line); }
+    .box-head h2 { margin: 0; font-size: 14px; }
+    .box-head p { margin: 3px 0 0; color: var(--muted); font-size: 9px; }
+    .count-chip { padding: 4px 8px; color: var(--blue); background: var(--blue-soft); border-radius: 999px; font-size: 9px; font-weight: 800; }
+
+    .table-scroll { overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; white-space: nowrap; }
+    th { padding: 10px 14px; color: var(--subtle); background: #fafbfc; border-bottom: 1px solid var(--line); font-size: 8px; font-weight: 800; letter-spacing: .05em; text-align: left; }
+    td { padding: 13px 14px; border-bottom: 1px solid #edf0f3; font-size: 10px; vertical-align: middle; }
+    tbody tr:last-child td { border-bottom: 0; }
+    tbody tr:hover { background: #fafbff; }
+    .customer { display: flex; align-items: center; gap: 9px; }
+    .customer-mark { display: grid; width: 30px; height: 30px; place-items: center; color: var(--blue); background: var(--blue-soft); border-radius: 9px; font-size: 9px; font-weight: 800; }
+    .customer strong { display: block; font-size: 10px; }
+    .customer small { display: block; color: var(--subtle); font-size: 8px; }
+    .services { display: flex; gap: 4px; }
+    .service-pill { padding: 3px 6px; color: #536176; background: #eef1f5; border-radius: 5px; font-size: 8px; font-weight: 700; }
+    .service-pill.cleaner { color: #3951a5; background: #eef1ff; }
+    .service-pill.wifi { color: #08768a; background: #e9f8fa; }
+    .service-pill.vault { color: #6f4ba9; background: #f3effb; }
+    .stage { display: flex; align-items: center; gap: 8px; }
+    .stage-track { width: 78px; height: 5px; overflow: hidden; background: #e8ecf2; border-radius: 999px; }
+    .stage-fill { height: 100%; width: var(--progress); background: var(--stage-color, var(--blue)); border-radius: inherit; transition: width .35s ease; }
+    .stage-name { min-width: 55px; color: var(--stage-color, var(--blue)); font-size: 8px; font-weight: 800; }
+    .empty { padding: 42px 20px; color: var(--subtle); font-size: 11px; text-align: center; }
+
+    .funnel { padding: 18px; }
+    .funnel-row + .funnel-row { margin-top: 15px; }
+    .funnel-line { display: flex; justify-content: space-between; gap: 12px; margin-bottom: 6px; font-size: 10px; }
+    .funnel-line span { color: var(--muted); }
+    .funnel-bar { height: 8px; overflow: hidden; background: #edf0f4; border-radius: 999px; }
+    .funnel-bar i { display: block; height: 100%; width: var(--width); background: linear-gradient(90deg, #3157d5, #7181ee); border-radius: inherit; transition: width .35s; }
+    .sim-note { margin: 15px 18px 18px; padding: 11px; color: #7b5b24; background: var(--amber-soft); border-radius: 9px; font-size: 9px; }
+
+    .section-row { display: grid; grid-template-columns: minmax(0, 1fr) minmax(310px, .9fr); gap: 16px; margin-top: 16px; }
+    .product-list { padding: 8px 18px 15px; }
+    .product-row { display: grid; grid-template-columns: minmax(125px,1.1fr) 2fr 42px; gap: 12px; align-items: center; padding: 11px 0; border-bottom: 1px solid #edf0f3; font-size: 10px; }
+    .product-row:last-child { border: 0; }
+    .product-row strong { font-size: 10px; }
+    .product-bar { height: 7px; overflow: hidden; background: #edf0f4; border-radius: 999px; }
+    .product-bar i { display: block; height: 100%; width: var(--width); background: var(--bar); border-radius: inherit; }
+    .product-value { text-align: right; font-weight: 800; }
+    .activity-list { margin: 0; padding: 7px 18px 15px; list-style: none; }
+    .activity-list li { display: grid; grid-template-columns: 7px 1fr auto; gap: 9px; align-items: start; padding: 9px 0; border-bottom: 1px solid #edf0f3; font-size: 9px; }
+    .activity-list li:last-child { border: 0; }
+    .activity-dot { width: 7px; height: 7px; margin-top: 3px; background: var(--green); border-radius: 50%; }
+    .activity-list time { color: var(--subtle); }
+
+    .agency-summary { display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 13px; margin-bottom: 16px; }
+    .summary-card { padding: 19px; background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); box-shadow: var(--shadow); }
+    .summary-card span { color: var(--muted); font-size: 10px; }
+    .summary-card strong { display: block; margin-top: 5px; font-size: 23px; }
+    .agency-name { display: flex; align-items: center; gap: 9px; }
+    .agency-logo { display: grid; width: 30px; height: 30px; place-items: center; color: #fff; background: var(--agency-color, var(--blue)); border-radius: 9px; font-size: 9px; font-weight: 800; }
+    .rank { color: var(--amber); font-weight: 900; }
+    .rate { display: inline-block; min-width: 48px; padding: 4px 7px; color: var(--green); background: var(--green-soft); border-radius: 999px; font-weight: 800; text-align: center; }
+
+    .footer-note { margin-top: 18px; color: var(--subtle); font-size: 9px; text-align: center; }
+
+    @media (max-width: 1080px) {
+      .kpis { grid-template-columns: repeat(2, minmax(0,1fr)); }
+      .grid-main, .section-row { grid-template-columns: 1fr; }
+    }
+    @media (max-width: 760px) {
+      .demo-banner { position: static; align-items: flex-start; }
+      .app { display: block; }
+      .sidebar { position: static; display: block; width: 100%; height: auto; padding: 12px; }
+      .brand { padding: 0 4px 10px; }
+      .side-label, .sidebar-note { display: none; }
+      .nav-list { display: flex; overflow-x: auto; }
+      .nav-button { white-space: nowrap; }
+      .back-link { position: absolute; top: 52px; right: 14px; margin: 0; }
+      .topbar { min-height: 60px; padding: 11px 14px; }
+      .operator span:last-child { display: none; }
+      .content { padding: 18px 12px 40px; }
+      .toolbar { display: block; }
+      .filters { display: grid; grid-template-columns: 1fr 1fr; }
+      .select-wrap select { width: 100%; min-width: 0; }
+      .live-control { justify-content: center; }
+      .updated { display: block; margin-top: 8px; }
+      .agency-summary { grid-template-columns: 1fr; }
+    }
+    @media (max-width: 490px) {
+      .kpis { grid-template-columns: 1fr 1fr; gap: 8px; }
+      .kpi-card { min-height: 118px; padding: 14px; }
+      .kpi-value { font-size: 23px; }
+      .filters { grid-template-columns: 1fr; }
+      .operator { display: none; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { scroll-behavior: auto !important; animation: none !important; transition: none !important; }
+    }
+  </style>
+</head>
+<body>
+  <div class="demo-banner"><strong>DEMO</strong><span>架空データによるUIプレビューです。進捗更新・集計・代理店連携はブラウザ内でシミュレーションしています。</span></div>
+  <div class="app">
+    <aside class="sidebar">
+      <div class="brand"><span class="brand-mark" aria-hidden="true">▦</span><span>代理店管理</span></div>
+      <p class="side-label">MANAGEMENT</p>
+      <ul class="nav-list">
+        <li><button class="nav-button is-active" type="button" data-view="progress"><span class="nav-icon" aria-hidden="true">◉</span>申込モニター</button></li>
+        <li><button class="nav-button" type="button" data-view="agencies"><span class="nav-icon" aria-hidden="true">▦</span>代理店実績</button></li>
+      </ul>
+      <div class="sidebar-note">本番環境への接続はありません。表示名・件数・時刻はすべてサンプルです。</div>
+      <a class="back-link" href="../">← プレビュー一覧へ</a>
+    </aside>
+
+    <main class="main">
+      <header class="topbar">
+        <div class="page-title"><h1 id="page-heading">申込モニター</h1><p id="page-subheading">お客さまの案内状況をひと目で確認</p></div>
+        <div class="top-actions">
+          <span class="count-chip">UI PREVIEW</span>
+          <div class="operator"><span class="avatar">DE</span><span>デモ管理者</span></div>
+        </div>
+      </header>
+
+      <div class="content">
+        <div class="toolbar">
+          <div class="filters">
+            <div class="select-wrap"><select id="agency-filter" aria-label="代理店で絞り込み"><option value="all">すべての代理店</option><option value="east">東日本パートナーズ</option><option value="mirai">ミライ通信</option><option value="sakura">さくらサポート</option></select></div>
+            <div class="select-wrap"><select id="period-filter" aria-label="集計期間"><option>今月（デモ）</option><option>先月（デモ）</option><option>直近7日（デモ）</option></select></div>
+            <button class="live-control" id="live-toggle" type="button" aria-pressed="true"><span class="live-dot"></span><span id="live-label">自動更新デモ ON</span></button>
+          </div>
+          <span class="updated" id="updated-at">サンプルデータを表示中</span>
+        </div>
+
+        <section class="view is-active" id="view-progress" aria-labelledby="page-heading">
+          <div class="kpis">
+            <article class="kpi-card" style="--kpi-color:#3157d5;--kpi-soft:#eef2ff"><span class="kpi-label">進行中<span class="kpi-icon">◉</span></span><strong class="kpi-value" id="kpi-active">0</strong><span class="kpi-meta">現在LPを案内中のサンプル</span></article>
+            <article class="kpi-card" style="--kpi-color:#16866a;--kpi-soft:#eaf8f3"><span class="kpi-label">申込完了<span class="kpi-icon">✓</span></span><strong class="kpi-value" id="kpi-complete">0</strong><span class="kpi-meta"><b id="kpi-rate">0%</b> サンプル完了率</span></article>
+            <article class="kpi-card" style="--kpi-color:#0e8fa5;--kpi-soft:#e9f8fa"><span class="kpi-label">リンク開封<span class="kpi-icon">↗</span></span><strong class="kpi-value" id="kpi-opened">0</strong><span class="kpi-meta">本日は架空の6件を表示</span></article>
+            <article class="kpi-card" style="--kpi-color:#7556c7;--kpi-soft:#f3effb"><span class="kpi-label">選択サービス<span class="kpi-icon">▦</span></span><strong class="kpi-value" id="kpi-services">0</strong><span class="kpi-meta">延べ選択数（サンプル）</span></article>
+          </div>
+
+          <div class="grid-main">
+            <article class="box">
+              <header class="box-head"><div><h2>リアルタイム申込状況</h2><p>架空顧客のステップが一定間隔で進むデモです</p></div><span class="count-chip" id="application-count">0件</span></header>
+              <div class="table-scroll"><table><thead><tr><th>お客さま</th><th>代理店</th><th>選択サービス</th><th>現在のステップ</th><th>更新</th></tr></thead><tbody id="applications-body"></tbody></table></div>
+            </article>
+            <aside class="box">
+              <header class="box-head"><div><h2>申込ファネル</h2><p>現在表示中のサンプル</p></div></header>
+              <div class="funnel" id="funnel"></div>
+              <p class="sim-note">自動更新は見た目を確認するための演出です。本番のリアルタイム通信を示すものではありません。</p>
+            </aside>
+          </div>
+
+          <div class="section-row">
+            <article class="box">
+              <header class="box-head"><div><h2>サービス別 選択状況</h2><p>表示中のサンプル申込に基づく延べ数</p></div></header>
+              <div class="product-list" id="product-stats"></div>
+            </article>
+            <article class="box">
+              <header class="box-head"><div><h2>最近の動き</h2><p>シミュレーション履歴</p></div></header>
+              <ul class="activity-list" id="activity-list"></ul>
+            </article>
+          </div>
+        </section>
+
+        <section class="view" id="view-agencies" aria-labelledby="page-heading">
+          <div class="agency-summary">
+            <article class="summary-card"><span>登録代理店（サンプル）</span><strong id="agency-total">3</strong></article>
+            <article class="summary-card"><span>今月の申込（サンプル）</span><strong id="agency-contracts">58件</strong></article>
+            <article class="summary-card"><span>全体完了率（サンプル）</span><strong id="agency-rate">72.5%</strong></article>
+          </div>
+          <article class="box">
+            <header class="box-head"><div><h2>代理店別パフォーマンス</h2><p>すべて架空の集計値です。フィルターで表示を切り替えられます。</p></div><span class="count-chip" id="agency-row-count">3代理店</span></header>
+            <div class="table-scroll"><table><thead><tr><th>順位 / 代理店</th><th>LP送信</th><th>開封</th><th>申込完了</th><th>完了率</th><th>主なサービス</th></tr></thead><tbody id="agency-body"></tbody></table></div>
+          </article>
+          <div class="section-row">
+            <article class="box">
+              <header class="box-head"><div><h2>代理店別 申込構成</h2><p>サービス選択比率のサンプル</p></div></header>
+              <div class="product-list" id="agency-mix"></div>
+            </article>
+            <article class="box">
+              <header class="box-head"><div><h2>デモについて</h2><p>画面確認時のご注意</p></div></header>
+              <div style="padding:18px;color:var(--muted);font-size:10px;line-height:1.8">代理店コードによる自動判定、個別顧客の追跡、決済・契約状態との同期などは、この静的ページでは実行していません。操作結果はブラウザ内だけで変化し、再読み込みすると初期状態へ戻ります。</div>
+            </article>
+          </div>
+        </section>
+
+        <p class="footer-note">UIデモ / 架空データのみ · 顧客情報、契約情報、決済情報の取得・保存・送信は行いません。</p>
+      </div>
+    </main>
+  </div>
+
+  <script>
+    (() => {
+      'use strict';
+      const stages = [
+        { key: 'sent', label: 'SMS送信', progress: 10, color: '#98a2b3' },
+        { key: 'opened', label: 'LPを開封', progress: 28, color: '#0e8fa5' },
+        { key: 'info', label: '情報入力中', progress: 48, color: '#3157d5' },
+        { key: 'consent', label: '同意確認中', progress: 66, color: '#7556c7' },
+        { key: 'payment', label: '決済登録中', progress: 84, color: '#b36700' },
+        { key: 'complete', label: '申込完了', progress: 100, color: '#16866a' }
+      ];
+      const agencyNames = { east: '東日本パートナーズ', mirai: 'ミライ通信', sakura: 'さくらサポート' };
+      const productNames = { cleaner: 'ガベット君', wifi: 'Wi-Fi', vault: '保管庫' };
+      const applications = [
+        { id: 'DEMO-1042', initials: 'YT', name: '山田 太郎（架空）', agency: 'east', products: ['cleaner','wifi','vault'], stage: 4, age: 0 },
+        { id: 'DEMO-1041', initials: 'SK', name: '佐藤 花子（架空）', agency: 'mirai', products: ['wifi','vault'], stage: 2, age: 1 },
+        { id: 'DEMO-1040', initials: 'KT', name: '小林 健（架空）', agency: 'sakura', products: ['cleaner'], stage: 5, age: 3 },
+        { id: 'DEMO-1039', initials: 'MI', name: '森 一郎（架空）', agency: 'east', products: ['cleaner','vault'], stage: 3, age: 4 },
+        { id: 'DEMO-1038', initials: 'AN', name: '青木 奈々（架空）', agency: 'mirai', products: ['cleaner','wifi'], stage: 1, age: 6 },
+        { id: 'DEMO-1037', initials: 'TH', name: '高橋 春子（架空）', agency: 'sakura', products: ['vault'], stage: 5, age: 9 }
+      ];
+      const agencies = [
+        { id:'east', rank:1, color:'#3157d5', sent:38, opened:34, complete:29, lead:'ガベット君' },
+        { id:'mirai', rank:2, color:'#0e8fa5', sent:27, opened:23, complete:18, lead:'Wi-Fiチェック' },
+        { id:'sakura', rank:3, color:'#7556c7', sent:19, opened:16, complete:11, lead:'パスワード保管庫' }
+      ];
+      const activity = [
+        { text: '山田 太郎（架空）さんが決済登録へ進みました', time: 'たった今' },
+        { text: '森 一郎（架空）さんが同意画面を確認中です', time: '2分前' },
+        { text: '小林 健（架空）さんのデモ申込が完了しました', time: '4分前' }
+      ];
+      let live = true;
+      let tick = 0;
+      let view = 'progress';
+
+      const agencyFilter = document.getElementById('agency-filter');
+      const tbody = document.getElementById('applications-body');
+      const liveToggle = document.getElementById('live-toggle');
+      const liveLabel = document.getElementById('live-label');
+      const escapeHtml = (value) => String(value).replace(/[&<>'"]/g, (char) => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', "'":'&#39;', '"':'&quot;' })[char]);
+
+      function visibleApps() {
+        return applications.filter((item) => agencyFilter.value === 'all' || item.agency === agencyFilter.value);
+      }
+      function visibleAgencies() {
+        return agencies.filter((item) => agencyFilter.value === 'all' || item.id === agencyFilter.value);
+      }
+      function relativeTime(age) {
+        if (age <= 0) return 'たった今';
+        return age + '分前';
+      }
+      function servicePills(products) {
+        return '<div class="services">' + products.map((key) => '<span class="service-pill ' + key + '">' + productNames[key] + '</span>').join('') + '</div>';
+      }
+
+      function renderApplications() {
+        const items = visibleApps();
+        document.getElementById('application-count').textContent = items.length + '件';
+        if (!items.length) {
+          tbody.innerHTML = '<tr><td class="empty" colspan="5">表示するサンプルがありません</td></tr>';
+        } else {
+          tbody.innerHTML = items.map((item) => {
+            const stage = stages[item.stage];
+            return '<tr><td><div class="customer"><span class="customer-mark">' + escapeHtml(item.initials) + '</span><span><strong>' + escapeHtml(item.name) + '</strong><small>' + escapeHtml(item.id) + '</small></span></div></td>' +
+              '<td>' + escapeHtml(agencyNames[item.agency]) + '</td><td>' + servicePills(item.products) + '</td>' +
+              '<td><div class="stage" style="--stage-color:' + stage.color + '"><div class="stage-track"><div class="stage-fill" style="--progress:' + stage.progress + '%"></div></div><span class="stage-name">' + stage.label + '</span></div></td>' +
+              '<td style="color:var(--subtle)">' + relativeTime(item.age) + '</td></tr>';
+          }).join('');
+        }
+
+        const total = items.length || 1;
+        const complete = items.filter((item) => item.stage === stages.length - 1).length;
+        const opened = items.filter((item) => item.stage >= 1).length;
+        document.getElementById('kpi-active').textContent = items.length - complete;
+        document.getElementById('kpi-complete').textContent = complete;
+        document.getElementById('kpi-opened').textContent = opened;
+        document.getElementById('kpi-services').textContent = items.reduce((sum, item) => sum + item.products.length, 0);
+        document.getElementById('kpi-rate').textContent = Math.round(complete / total * 100) + '%';
+
+        const funnelSteps = [
+          { label:'SMS送信', count:items.length, min:0 },
+          { label:'LP開封', count:items.filter((item) => item.stage >= 1).length, min:1 },
+          { label:'情報入力', count:items.filter((item) => item.stage >= 2).length, min:2 },
+          { label:'申込完了', count:complete, min:5 }
+        ];
+        document.getElementById('funnel').innerHTML = funnelSteps.map((row) => '<div class="funnel-row"><div class="funnel-line"><span>' + row.label + '</span><strong>' + row.count + '件</strong></div><div class="funnel-bar"><i style="--width:' + Math.round(row.count / total * 100) + '%"></i></div></div>').join('');
+
+        const counts = { cleaner:0, wifi:0, vault:0 };
+        items.forEach((item) => item.products.forEach((key) => counts[key]++));
+        const max = Math.max(1, ...Object.values(counts));
+        const styles = { cleaner:'#3157d5', wifi:'#0e8fa5', vault:'#7556c7' };
+        const labels = { cleaner:'ガベット君', wifi:'Wi-Fiチェック', vault:'パスワード保管庫' };
+        document.getElementById('product-stats').innerHTML = Object.keys(counts).map((key) => '<div class="product-row"><strong>' + labels[key] + '</strong><div class="product-bar"><i style="--width:' + Math.round(counts[key] / max * 100) + '%;--bar:' + styles[key] + '"></i></div><span class="product-value">' + counts[key] + '件</span></div>').join('');
+        document.getElementById('activity-list').innerHTML = activity.slice(0,3).map((item) => '<li><span class="activity-dot"></span><span>' + escapeHtml(item.text) + '</span><time>' + escapeHtml(item.time) + '</time></li>').join('');
+      }
+
+      function renderAgencies() {
+        const items = visibleAgencies();
+        const sent = items.reduce((sum, item) => sum + item.sent, 0);
+        const completed = items.reduce((sum, item) => sum + item.complete, 0);
+        document.getElementById('agency-total').textContent = items.length;
+        document.getElementById('agency-contracts').textContent = completed + '件';
+        document.getElementById('agency-rate').textContent = (sent ? completed / sent * 100 : 0).toFixed(1) + '%';
+        document.getElementById('agency-row-count').textContent = items.length + '代理店';
+        document.getElementById('agency-body').innerHTML = items.map((item) => {
+          const rate = (item.complete / item.sent * 100).toFixed(1);
+          return '<tr><td><div class="agency-name"><span class="rank">#' + item.rank + '</span><span class="agency-logo" style="--agency-color:' + item.color + '">' + agencyNames[item.id].slice(0,1) + '</span><strong>' + agencyNames[item.id] + '</strong></div></td><td>' + item.sent + '件</td><td>' + item.opened + '件</td><td><strong>' + item.complete + '件</strong></td><td><span class="rate">' + rate + '%</span></td><td>' + item.lead + '</td></tr>';
+        }).join('');
+        document.getElementById('agency-mix').innerHTML = items.map((item, index) => {
+          const width = Math.round(item.complete / Math.max(...items.map((row) => row.complete)) * 100);
+          return '<div class="product-row"><strong>' + agencyNames[item.id] + '</strong><div class="product-bar"><i style="--width:' + width + '%;--bar:' + item.color + '"></i></div><span class="product-value">' + item.complete + '件</span></div>';
+        }).join('');
+      }
+
+      function renderAll() {
+        renderApplications();
+        renderAgencies();
+        const now = new Date();
+        document.getElementById('updated-at').textContent = '最終デモ更新 ' + now.toLocaleTimeString('ja-JP', { hour:'2-digit', minute:'2-digit', second:'2-digit' });
+      }
+
+      function simulate() {
+        if (!live || view !== 'progress') return;
+        tick++;
+        applications.forEach((item) => { item.age++; });
+        const candidates = visibleApps().filter((item) => item.stage < stages.length - 1);
+        if (!candidates.length) return renderAll();
+        const item = candidates[tick % candidates.length];
+        item.stage++;
+        item.age = 0;
+        const stage = stages[item.stage];
+        activity.unshift({ text: item.name + 'さんが「' + stage.label + '」へ進みました', time:'たった今' });
+        activity.slice(1).forEach((entry, index) => { entry.time = (index + 2) + '分前'; });
+        renderAll();
+      }
+
+      document.querySelectorAll('.nav-button').forEach((button) => button.addEventListener('click', () => {
+        view = button.dataset.view;
+        document.querySelectorAll('.nav-button').forEach((item) => item.classList.toggle('is-active', item === button));
+        document.querySelectorAll('.view').forEach((item) => item.classList.toggle('is-active', item.id === 'view-' + view));
+        const agencyView = view === 'agencies';
+        document.getElementById('page-heading').textContent = agencyView ? '代理店実績' : '申込モニター';
+        document.getElementById('page-subheading').textContent = agencyView ? '代理店ごとのサンプル実績を比較' : 'お客さまの案内状況をひと目で確認';
+      }));
+
+      agencyFilter.addEventListener('change', renderAll);
+      document.getElementById('period-filter').addEventListener('change', renderAll);
+      liveToggle.addEventListener('click', () => {
+        live = !live;
+        liveToggle.classList.toggle('is-paused', !live);
+        liveToggle.setAttribute('aria-pressed', String(live));
+        liveLabel.textContent = live ? '自動更新デモ ON' : '自動更新デモ OFF';
+      });
+
+      renderAll();
+      window.setInterval(simulate, 7000);
+    })();
+  </script>
+</body>
+</html>

@@ -1,0 +1,117 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="robots" content="noindex,nofollow,noarchive">
+  <meta name="theme-color" content="#071b24">
+  <title>ガベット君｜アプリプレビュー</title>
+  <style>
+    :root{color-scheme:dark;font-family:-apple-system,BlinkMacSystemFont,"Hiragino Sans","Yu Gothic UI",Meiryo,sans-serif;--bg:#071b24;--panel:#102b35;--line:rgba(255,255,255,.1);--muted:#a8bac0;--mint:#5fe3ba;--blue:#67b7ff;--orange:#ffb25f}
+    *{box-sizing:border-box}
+    html{background:#06141b}
+    body{margin:0;min-height:100vh;background:radial-gradient(circle at 50% -20%,#164b59 0,transparent 45%),#06141b;color:#f7fbfc;font-size:17px;line-height:1.65;-webkit-text-size-adjust:100%}
+    button,a{font:inherit}
+    a{color:inherit}
+    .previewbar{position:sticky;top:0;z-index:20;display:flex;align-items:center;justify-content:space-between;gap:16px;padding:10px max(16px,env(safe-area-inset-left)) 10px max(16px,env(safe-area-inset-right));background:rgba(4,17,23,.9);border-bottom:1px solid var(--line);backdrop-filter:blur(18px);font-size:13px;font-weight:700;letter-spacing:.06em}
+    .previewbar a{text-decoration:none;color:var(--mint)}
+    .previewbar span{color:#ccdade}
+    .shell{width:min(440px,100%);min-height:calc(100vh - 45px);margin:0 auto;padding:calc(26px + env(safe-area-inset-top)) 18px calc(116px + env(safe-area-inset-bottom))}
+    .brand{display:flex;align-items:center;gap:12px;margin-bottom:28px}
+    .logo{display:grid;width:52px;height:52px;place-items:center;border-radius:16px;background:linear-gradient(145deg,#65ebbd,#16a785);box-shadow:0 12px 30px rgba(31,202,155,.22);color:#062019}
+    .logo svg{width:30px;height:30px}
+    .brand b{display:block;font-size:21px;letter-spacing:-.02em}.brand small{display:block;color:var(--muted);font-size:13px}
+    .badge{margin-left:auto;padding:5px 10px;border:1px solid rgba(95,227,186,.35);border-radius:999px;color:var(--mint);font-size:11px;font-weight:800;letter-spacing:.1em}
+    h1{margin:0;font-size:clamp(32px,9vw,42px);line-height:1.15;letter-spacing:-.045em}
+    .lead{margin:12px 0 26px;color:#c6d5d9}
+    .status{display:flex;align-items:center;gap:9px;margin:0 0 20px;color:var(--mint);font-weight:700}
+    .dot{width:10px;height:10px;border-radius:50%;background:currentColor;box-shadow:0 0 0 6px rgba(95,227,186,.1)}
+    .status.paused{color:var(--orange)}
+    .hero{position:relative;overflow:hidden;padding:24px;border:1px solid var(--line);border-radius:28px;background:linear-gradient(150deg,rgba(22,62,72,.95),rgba(11,37,46,.95));box-shadow:0 24px 80px rgba(0,0,0,.22)}
+    .hero:after{position:absolute;right:-45px;top:-55px;width:160px;height:160px;border-radius:50%;background:rgba(95,227,186,.08);content:""}
+    .metric{position:relative;z-index:1}.metric small{display:block;color:var(--muted);font-size:14px}.metric strong{display:block;margin:2px 0;font-size:48px;line-height:1.1;letter-spacing:-.05em}.metric strong span{font-size:18px;letter-spacing:0;color:#d8e4e7}.metric p{margin:8px 0 0;color:#bfd0d4;font-size:14px}
+    .split{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px}
+    .mini{padding:17px;border:1px solid var(--line);border-radius:20px;background:rgba(255,255,255,.035)}.mini span{display:block;color:var(--muted);font-size:12px}.mini b{display:block;margin-top:3px;font-size:23px}.mini small{color:#b8c9cd;font-size:11px}
+    .section-title{margin:30px 4px 10px;color:var(--muted);font-size:13px;font-weight:700;letter-spacing:.08em}
+    .list{overflow:hidden;border:1px solid var(--line);border-radius:22px;background:var(--panel)}
+    .row{display:flex;align-items:center;min-height:70px;padding:14px 17px;border-bottom:1px solid var(--line);gap:13px}.row:last-child{border-bottom:0}
+    .ico{display:grid;flex:0 0 auto;width:40px;height:40px;place-items:center;border-radius:13px;background:#173e4a;color:var(--blue)}.ico svg{width:22px;height:22px}
+    .row .txt{min-width:0;flex:1}.row b{display:block;font-size:16px}.row small{display:block;color:var(--muted);font-size:12px;line-height:1.45}.value{color:var(--mint);font-size:14px;font-weight:700}
+    .action{width:100%;min-height:58px;margin-top:14px;border:0;border-radius:18px;background:var(--mint);color:#062019;font-weight:800;cursor:pointer}.action:active{transform:scale(.99)}
+    .fine{margin:22px 4px 0;color:#899da3;font-size:12px;line-height:1.65}
+    .tabs{position:fixed;z-index:15;left:50%;bottom:0;width:min(440px,100%);transform:translateX(-50%);display:grid;grid-template-columns:repeat(3,1fr);padding:10px 12px calc(10px + env(safe-area-inset-bottom));background:rgba(6,20,27,.9);border-top:1px solid var(--line);backdrop-filter:blur(20px)}
+    .tab{border:0;background:none;color:#7f959c;padding:5px;cursor:pointer;font-size:11px;font-weight:700}.tab svg{display:block;width:24px;height:24px;margin:0 auto 2px}.tab[aria-selected="true"]{color:var(--mint)}
+    .view[hidden]{display:none}
+    .notice{padding:16px 18px;border-radius:18px;background:rgba(103,183,255,.09);border:1px solid rgba(103,183,255,.2);color:#c8e5ff;font-size:14px}
+    @media(min-width:600px){body{padding-bottom:30px}.shell{margin-top:28px;border:1px solid var(--line);border-radius:36px 36px 0 0;background:rgba(7,27,36,.72)}.tabs{bottom:30px;border:1px solid var(--line);border-radius:0 0 30px 30px}}
+  </style>
+</head>
+<body>
+  <div class="previewbar"><a href="../">← プレビュー一覧</a><span>操作できるデモ · 数値はサンプル</span></div>
+  <main class="shell">
+    <div class="brand">
+      <span class="logo" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 2.8 4.7 6v5.3c0 4.5 3 8.5 7.3 10 4.3-1.5 7.3-5.5 7.3-10V6L12 2.8Z" fill="currentColor"/><path d="m8.3 12 2.2 2.2 5-5" fill="none" stroke="#fff" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+      <span><b>ガベット君</b><small>広告・追跡通信フィルター</small></span>
+      <span class="badge">DEMO</span>
+    </div>
+
+    <section class="view" data-view="home">
+      <div class="status" id="status"><span class="dot"></span><span id="statusText">フィルターは動作中です</span></div>
+      <h1>見えない通信を、<br>必要な分だけ。</h1>
+      <p class="lead">広告・追跡用として登録された接続先への通信を、DNSで照合して減らします。</p>
+      <div class="hero">
+        <div class="metric"><small>今月、照合して止めた回数</small><strong>1,284 <span>回</span></strong><p>端末から届いた問い合わせの集計です。閲覧先の名前は保存しません。</p></div>
+      </div>
+      <div class="split">
+        <div class="mini"><span>今月の照合</span><b>7,104回</b><small>接続先を調べた回数</small></div>
+        <div class="mini"><span>照合結果の割合</span><b>18.1%</b><small>広告・追跡として止めた割合</small></div>
+      </div>
+      <p class="section-title">現在の状態</p>
+      <div class="list">
+        <div class="row"><span class="ico"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8" fill="none" stroke="currentColor" stroke-width="2"/><path d="m6.7 6.7 10.6 10.6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></span><span class="txt"><b>広告・追跡の通信</b><small>登録済みの接続先をDNSで照合</small></span><span class="value" id="filterState">止めています</span></div>
+        <div class="row"><span class="ico"><svg viewBox="0 0 24 24"><path d="M12 3v18M5 10l7-7 7 7" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></span><span class="txt"><b>閲覧先の記録</b><small>問い合わせたドメイン名は保存しません</small></span><span class="value">保存なし</span></div>
+      </div>
+    </section>
+
+    <section class="view" data-view="report" hidden>
+      <h1>この7日間</h1><p class="lead">実際に照合した回数だけを集計します。サイト名やアプリ名は残りません。</p>
+      <div class="hero"><div class="metric"><small>広告・追跡として止めた回数</small><strong>436 <span>回</span></strong><p>デモ用のサンプルデータです。</p></div></div>
+      <p class="section-title">日ごとの回数</p>
+      <div class="list">
+        <div class="row"><span class="txt"><b>今日</b><small>9月16日</small></span><span class="value">61回</span></div>
+        <div class="row"><span class="txt"><b>昨日</b><small>9月15日</small></span><span class="value">78回</span></div>
+        <div class="row"><span class="txt"><b>この7日間</b><small>9月10日〜16日</small></span><span class="value">436回</span></div>
+      </div>
+      <p class="fine">割合は「止めた回数 ÷ 照合した回数」です。危険を防いだ割合や、端末が軽くなった割合ではありません。</p>
+    </section>
+
+    <section class="view" data-view="settings" hidden>
+      <h1>設定</h1><p class="lead">必要なときだけ、フィルターを30分休ませられます。</p>
+      <div class="notice" id="pauseNotice">いまは広告・追跡用の通信を照合しています。</div>
+      <button class="action" id="pause" type="button">30分だけ休ませる</button>
+      <p class="section-title">できること・できないこと</p>
+      <div class="list">
+        <div class="row"><span class="txt"><b>止めないサイト</b><small>必要な接続先を許可リストへ登録</small></span><span class="value">2件 ›</span></div>
+        <div class="row"><span class="txt"><b>止められない広告</b><small>YouTubeやSNS内など、一部の広告には効きません</small></span></div>
+        <div class="row"><span class="txt"><b>端末の不調</b><small>空き容量やバッテリーの劣化は直せません</small></span></div>
+      </div>
+      <p class="fine">このデモは見た目と操作の確認用です。実際のDNS設定や通信の遮断は行いません。</p>
+    </section>
+  </main>
+
+  <nav class="tabs" aria-label="アプリのメニュー">
+    <button class="tab" type="button" data-tab="home" aria-selected="true"><svg viewBox="0 0 24 24"><path d="m4 11 8-7 8 7v9h-5v-6H9v6H4Z" fill="currentColor"/></svg>ホーム</button>
+    <button class="tab" type="button" data-tab="report" aria-selected="false"><svg viewBox="0 0 24 24"><rect x="4" y="12" width="4" height="8" rx="1" fill="currentColor"/><rect x="10" y="5" width="4" height="15" rx="1" fill="currentColor"/><rect x="16" y="9" width="4" height="11" rx="1" fill="currentColor"/></svg>レポート</button>
+    <button class="tab" type="button" data-tab="settings" aria-selected="false"><svg viewBox="0 0 24 24"><path d="M4 7h9m4 0h3M4 17h3m4 0h9" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><circle cx="15" cy="7" r="2" fill="currentColor"/><circle cx="9" cy="17" r="2" fill="currentColor"/></svg>設定</button>
+  </nav>
+  <script>
+    (function(){
+      var tabs=document.querySelectorAll("[data-tab]");
+      var views=document.querySelectorAll("[data-view]");
+      tabs.forEach(function(tab){tab.addEventListener("click",function(){var id=tab.getAttribute("data-tab");tabs.forEach(function(x){x.setAttribute("aria-selected",String(x===tab));});views.forEach(function(v){v.hidden=v.getAttribute("data-view")!==id;});window.scrollTo({top:0,behavior:"smooth"});});});
+      var paused=false;var button=document.getElementById("pause");
+      button.addEventListener("click",function(){paused=!paused;document.getElementById("pauseNotice").textContent=paused?"一時停止中です。このデモでは残り29分59秒として表示します。":"フィルターを再開しました。広告・追跡用の通信を照合しています。";button.textContent=paused?"今すぐ再開する":"30分だけ休ませる";document.getElementById("status").classList.toggle("paused",paused);document.getElementById("statusText").textContent=paused?"一時停止中":"フィルターは動作中です";document.getElementById("filterState").textContent=paused?"休止中":"止めています";});
+    })();
+  </script>
+</body>
+</html>
