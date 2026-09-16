@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="robots" content="noindex,nofollow,noarchive">
+  <title>スマカサ プレビュー</title>
+  <style>
+    :root { color-scheme: light; font-family: -apple-system, BlinkMacSystemFont, "Hiragino Sans", "Yu Gothic", sans-serif; }
+    * { box-sizing: border-box; }
+    body { margin: 0; min-height: 100vh; color: #17211e; background: #f1f5f3; }
+    main { width: min(920px, calc(100% - 40px)); margin: 0 auto; padding: 72px 0; }
+    .eyebrow { margin: 0 0 14px; color: #286e5c; font-size: 13px; font-weight: 700; letter-spacing: .14em; }
+    h1 { margin: 0; font-size: clamp(34px, 7vw, 64px); letter-spacing: -.04em; }
+    .lead { max-width: 660px; margin: 20px 0 42px; color: #53605c; font-size: 17px; line-height: 1.8; }
+    .grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px; }
+    a { display: flex; min-height: 230px; padding: 28px; flex-direction: column; justify-content: space-between; color: inherit; background: #fff; border: 1px solid #d8e0dd; border-radius: 24px; box-shadow: 0 12px 36px rgba(28, 58, 49, .07); text-decoration: none; transition: transform .18s ease, box-shadow .18s ease; }
+    a:hover { transform: translateY(-3px); box-shadow: 0 18px 44px rgba(28, 58, 49, .12); }
+    .num { color: #2d7663; font-size: 14px; font-weight: 700; }
+    h2 { margin: 0 0 10px; font-size: 27px; }
+    .desc { margin: 0; color: #66716e; line-height: 1.7; }
+    .open { align-self: flex-end; color: #216a57; font-weight: 700; }
+    footer { margin-top: 30px; color: #7a8581; font-size: 12px; }
+    @media (max-width: 660px) { main { padding: 48px 0; } .grid { grid-template-columns: 1fr; } a { min-height: 200px; } }
+  </style>
+</head>
+<body>
+  <main>
+    <p class="eyebrow">PREVIEW</p>
+    <h1>スマカサ</h1>
+    <p class="lead">提案用デモと設計資料を、ブラウザで確認できます。内容は検討中のプレビューです。</p>
+    <div class="grid">
+      <a href="./proposal/">
+        <span class="num">01</span>
+        <div><h2>提案デモ</h2><p class="desc">お客様向け画面と管理画面のイメージを確認します。</p></div>
+        <span class="open">開く →</span>
+      </a>
+      <a href="./design/">
+        <span class="num">02</span>
+        <div><h2>設計書</h2><p class="desc">サービスの前提、構成、運用、法務上の検討事項を確認します。</p></div>
+        <span class="open">開く →</span>
+      </a>
+    </div>
+    <footer>検索エンジン向けのインデックス登録を抑止しています。</footer>
+  </main>
+</body>
+</html>
