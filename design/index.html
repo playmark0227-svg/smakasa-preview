@@ -1,0 +1,1042 @@
+<!doctype html><html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex,nofollow,noarchive">
+<title>ログ溜まらない君 設計書</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=BIZ+UDPGothic:wght@400;700&amp;family=IBM+Plex+Mono:wght@400;500&amp;family=Shippori+Mincho+B1:wght@700;800&amp;display=swap">
+<style>
+:root{
+  --ground:#F2F5F4;
+  --surface:#FFFFFF;
+  --sunken:#E7EDEB;
+  --ink:#16201D;
+  --ink-2:#4E5B57;
+  --rule:#D2DBD8;
+  --accent:#1D6A58;
+  --accent-soft:#DCECE6;
+  --crit:#B42318;
+  --crit-soft:#FBE5E2;
+  --warn:#8F5406;
+  --warn-soft:#FAEFD8;
+  --ok:#2A7247;
+  --ok-soft:#DFF0E5;
+  --font-display:"Shippori Mincho B1","Hiragino Mincho ProN","Yu Mincho",serif;
+  --font-body:"BIZ UDPGothic","Hiragino Sans","Yu Gothic UI","Meiryo",sans-serif;
+  --font-mono:"IBM Plex Mono",ui-monospace,"SFMono-Regular",Menlo,monospace;
+  --s-1:.8125rem;
+  --s0:1rem;
+  --s1:1.1875rem;
+  --s2:1.5rem;
+  --s3:2rem;
+  --s4:2.75rem;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --ground:#0E1412;
+    --surface:#151D1A;
+    --sunken:#1C2622;
+    --ink:#E3EAE7;
+    --ink-2:#9BAAA5;
+    --rule:#2B3632;
+    --accent:#62C3A7;
+    --accent-soft:#17302A;
+    --crit:#F4867C;
+    --crit-soft:#3B1B18;
+    --warn:#EDB55C;
+    --warn-soft:#352812;
+    --ok:#7ACB99;
+    --ok-soft:#15301F;
+  }
+}
+:root[data-theme="dark"]{
+  --ground:#0E1412;
+  --surface:#151D1A;
+  --sunken:#1C2622;
+  --ink:#E3EAE7;
+  --ink-2:#9BAAA5;
+  --rule:#2B3632;
+  --accent:#62C3A7;
+  --accent-soft:#17302A;
+  --crit:#F4867C;
+  --crit-soft:#3B1B18;
+  --warn:#EDB55C;
+  --warn-soft:#352812;
+  --ok:#7ACB99;
+  --ok-soft:#15301F;
+}
+
+*,*::before,*::after{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{
+  margin:0;
+  background:var(--ground);
+  color:var(--ink);
+  font-family:var(--font-body);
+  font-size:var(--s0);
+  line-height:1.85;
+  font-feature-settings:"palt" 0;
+}
+a{color:var(--accent);text-underline-offset:.2em;text-decoration-thickness:1px}
+a:hover{text-decoration-thickness:2px}
+a:focus-visible,summary:focus-visible{outline:2px solid var(--accent);outline-offset:3px;border-radius:3px}
+code,.mono{font-family:var(--font-mono);font-size:.88em}
+code{background:var(--sunken);padding:.08em .38em;border-radius:4px;white-space:nowrap}
+strong{font-weight:700}
+
+.page{
+  max-width:1200px;
+  margin:0 auto;
+  padding:56px 28px 120px;
+  display:grid;
+  grid-template-columns:200px minmax(0,1fr);
+  column-gap:64px;
+}
+
+/* masthead */
+.masthead{grid-column:1 / -1;padding-bottom:40px;margin-bottom:48px;border-bottom:1px solid var(--rule);display:grid;gap:18px}
+.kicker{margin:0;font-size:var(--s-1);color:var(--ink-2);letter-spacing:.08em}
+h1{
+  margin:0;
+  font-family:var(--font-display);
+  font-weight:800;
+  font-size:var(--s4);
+  line-height:1.25;
+  letter-spacing:.02em;
+  text-wrap:balance;
+}
+.lede{margin:0;max-width:40em;font-size:var(--s1);line-height:1.8;color:var(--ink)}
+.meta{display:flex;flex-wrap:wrap;gap:8px 28px;margin:6px 0 0;padding:0;font-size:var(--s-1);color:var(--ink-2)}
+.meta div{display:flex;gap:8px;align-items:baseline}
+.meta dt{letter-spacing:.06em}
+.meta dd{margin:0;color:var(--ink);font-family:var(--font-mono);font-variant-numeric:tabular-nums}
+
+/* table of contents */
+.toc{position:sticky;top:28px;align-self:start;font-size:var(--s-1)}
+.toc p{margin:0 0 10px;letter-spacing:.1em;color:var(--ink-2)}
+.toc ol{list-style:none;margin:0;padding:0;display:grid;gap:2px;border-left:1px solid var(--rule)}
+.toc a{display:block;padding:5px 0 5px 14px;color:var(--ink-2);text-decoration:none;line-height:1.5;margin-left:-1px;border-left:2px solid transparent}
+.toc a:hover{color:var(--ink);border-left-color:var(--accent)}
+
+main{min-width:0;display:flex;flex-direction:column;gap:88px}
+section{scroll-margin-top:24px;display:flex;flex-direction:column;gap:22px}
+h2{
+  margin:0;
+  font-family:var(--font-display);
+  font-weight:700;
+  font-size:var(--s3);
+  line-height:1.35;
+  letter-spacing:.02em;
+  text-wrap:balance;
+}
+.sub{margin:-10px 0 0;color:var(--ink-2);max-width:40em}
+h3{margin:14px 0 0;font-size:var(--s1);font-weight:700;line-height:1.5;text-wrap:balance}
+p{margin:0}
+.prose{max-width:40em;display:flex;flex-direction:column;gap:14px}
+ul.plain,ol.plain{margin:0;padding-left:1.3em;display:flex;flex-direction:column;gap:6px;max-width:40em}
+
+/* chips */
+.chip{
+  display:inline-flex;align-items:center;gap:6px;
+  font-size:var(--s-1);font-weight:700;line-height:1;
+  padding:6px 10px;border-radius:999px;white-space:nowrap;letter-spacing:.04em;
+  border:1px solid currentColor;
+}
+.chip.crit{color:var(--crit);background:var(--crit-soft)}
+.chip.warn{color:var(--warn);background:var(--warn-soft)}
+.chip.ok{color:var(--ok);background:var(--ok-soft)}
+.chip.info{color:var(--accent);background:var(--accent-soft)}
+
+/* verdict */
+.answer{
+  display:grid;gap:14px;
+  padding:28px 30px;
+  background:var(--surface);
+  border:1px solid var(--rule);
+  border-radius:6px;
+}
+.answer .big{font-family:var(--font-display);font-weight:800;font-size:var(--s2);line-height:1.5;text-wrap:balance}
+.risks{list-style:none;margin:0;padding:0;display:grid;gap:0;border-top:1px solid var(--rule)}
+.risks li{display:grid;grid-template-columns:132px minmax(0,1fr);gap:18px;padding:18px 0;border-bottom:1px solid var(--rule)}
+.risks .chip{justify-self:start;align-self:start;margin-top:3px}
+.risks h3{margin:0 0 4px;font-size:var(--s0)}
+.risks p{color:var(--ink-2)}
+
+/* key-value lists */
+.kv{display:grid;grid-template-columns:max-content minmax(0,1fr);gap:10px 28px;margin:0;max-width:52em}
+.kv dt{color:var(--ink-2);font-size:var(--s-1);letter-spacing:.06em;padding-top:3px}
+.kv dd{margin:0}
+
+/* two-column can / cannot */
+.split{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:20px}
+.split > div{background:var(--surface);border:1px solid var(--rule);border-radius:6px;padding:22px 24px;display:flex;flex-direction:column;gap:12px}
+.split h3{margin:0;display:flex;align-items:center;gap:10px}
+.split ul{margin:0;padding-left:1.2em;display:flex;flex-direction:column;gap:8px}
+
+/* tables */
+.tbl-wrap{overflow-x:auto;border:1px solid var(--rule);border-radius:6px;background:var(--surface)}
+table{border-collapse:collapse;width:100%;font-size:.9375rem;line-height:1.7}
+th,td{text-align:left;vertical-align:top;padding:12px 16px;border-bottom:1px solid var(--rule)}
+thead th{font-size:var(--s-1);color:var(--ink-2);font-weight:700;letter-spacing:.06em;background:var(--sunken);white-space:nowrap}
+tbody tr:last-child th,tbody tr:last-child td{border-bottom:0}
+tbody th{font-weight:700;white-space:nowrap}
+td.num,th.num{text-align:right;font-family:var(--font-mono);font-variant-numeric:tabular-nums;white-space:nowrap}
+caption{caption-side:bottom;text-align:left;padding:10px 16px;font-size:var(--s-1);color:var(--ink-2)}
+
+/* steps (real sequences only) */
+ol.steps{list-style:none;margin:0;padding:0;counter-reset:st;display:grid;gap:0;max-width:52em}
+ol.steps > li{counter-increment:st;display:grid;grid-template-columns:44px minmax(0,1fr);gap:14px;padding:14px 0;border-top:1px solid var(--rule)}
+ol.steps > li:last-child{border-bottom:1px solid var(--rule)}
+ol.steps > li::before{content:counter(st, decimal-leading-zero);font-family:var(--font-mono);font-size:var(--s-1);color:var(--accent);padding-top:3px}
+ol.steps h3{margin:0;font-size:var(--s0)}
+ol.steps p{color:var(--ink-2)}
+.who{font-size:var(--s-1);color:var(--ink-2);letter-spacing:.04em}
+
+/* callout */
+.note{
+  display:grid;gap:10px;
+  padding:20px 24px;border-radius:6px;
+  border:1px solid var(--warn);background:var(--warn-soft);
+  max-width:52em;
+}
+.note.crit{border-color:var(--crit);background:var(--crit-soft)}
+.note p{color:var(--ink)}
+
+/* diagram */
+figure{margin:0;display:flex;flex-direction:column;gap:10px}
+.diagram{background:var(--surface);border:1px solid var(--rule);border-radius:6px;padding:18px;overflow-x:auto}
+.diagram svg{display:block;width:100%;min-width:760px;height:auto;color:var(--ink-2)}
+figcaption{font-size:var(--s-1);color:var(--ink-2);max-width:52em}
+.dg-box{fill:var(--surface);stroke:var(--rule);stroke-width:1.5}
+.dg-main{fill:var(--sunken);stroke:var(--ink-2);stroke-width:1.5}
+.dg-step{fill:var(--surface);stroke:var(--rule);stroke-width:1}
+.dg-frame{fill:var(--accent-soft);stroke:var(--accent);stroke-width:1.5;stroke-dasharray:6 5}
+.dg-line{fill:none;stroke:currentColor;stroke-width:1.5}
+.dg-t{fill:var(--ink);font-family:var(--font-body);font-size:13px;font-weight:700}
+.dg-s{fill:var(--ink-2);font-family:var(--font-body);font-size:11.5px}
+.dg-l{fill:var(--ink-2);font-family:var(--font-body);font-size:11.5px}
+.dg-a{fill:var(--accent);font-family:var(--font-body);font-size:11.5px;font-weight:700}
+.dg-m{fill:var(--ink-2);font-family:var(--font-mono);font-size:11px}
+
+/* names */
+.names{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:20px}
+.name-card{background:var(--surface);border:1px solid var(--rule);border-radius:6px;padding:22px 22px 20px;display:flex;flex-direction:column;gap:10px}
+.name-card .rank{font-size:var(--s-1);color:var(--ink-2);letter-spacing:.08em}
+.name-card .nm{font-family:var(--font-display);font-weight:800;font-size:1.75rem;line-height:1.3}
+.name-card .dom{font-family:var(--font-mono);font-size:var(--s-1);color:var(--accent)}
+.name-card p{font-size:.9375rem}
+.name-card .con{color:var(--ink-2)}
+
+.src{font-size:var(--s-1);color:var(--ink-2);max-width:52em}
+.src a{color:var(--ink-2)}
+details{border-top:1px solid var(--rule);padding-top:12px}
+summary{cursor:pointer;font-weight:700}
+
+@media (max-width: 960px){
+  .page{grid-template-columns:1fr;padding-top:36px}
+  .toc{position:static;margin-bottom:48px}
+  .toc ol{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .names{grid-template-columns:1fr}
+}
+@media (max-width: 640px){
+  :root{--s3:1.625rem;--s4:2rem}
+  .split{grid-template-columns:1fr}
+  .risks li{grid-template-columns:1fr;gap:8px}
+  .kv{grid-template-columns:1fr;gap:2px 0}
+  .kv dd{margin-bottom:10px}
+  .answer{padding:22px 20px}
+}
+@media (prefers-reduced-motion: reduce){*{scroll-behavior:auto!important}}
+html{scroll-behavior:smooth}
+</style>
+</head><body>
+
+<div class="page">
+
+<header class="masthead">
+  <p class="kicker">事業設計レポート　2026年9月11日時点</p>
+  <h1>ログ溜まらない君 設計書</h1>
+  <p class="lede">スマホに設定をひとつ入れるだけで、広告・追跡・解析データ送信の通信を止めて、長く使っても重くなりにくくするサービス。テレアポの提携先が既存のお客様に販売し、あなたの会社が開発と運用を受け持つ、という前提で「作れるか・どこが危ないか・次に何をするか」をまとめました。</p>
+  <dl class="meta">
+    <div><dt>調査テーマ</dt><dd>18</dd></div>
+    <div><dt>別担当による検証</dt><dd>17</dd></div>
+    <div><dt>誤りと判定された主張</dt><dd>0</dd></div>
+    <div><dt>作成</dt><dd>2026-09-11</dd></div>
+  </dl>
+</header>
+
+<nav class="toc" aria-label="目次">
+  <p>目次</p>
+  <ol>
+    <li><a href="#verdict">結論</a></li>
+    <li><a href="#premise">決まっていること</a></li>
+    <li><a href="#scope">できること・できないこと</a></li>
+    <li><a href="#architecture">仕組み</a></li>
+    <li><a href="#onboarding">申込から設定完了まで</a></li>
+    <li><a href="#money">お金の流れと費用</a></li>
+    <li><a href="#legal">法律のチェックリスト</a></li>
+    <li><a href="#lists">止める通信・止めない通信</a></li>
+    <li><a href="#partner">提携先に見せるもの</a></li>
+    <li><a href="#naming">サービス名の候補</a></li>
+    <li><a href="#roadmap">次にやること</a></li>
+    <li><a href="#decisions">決めてほしいこと</a></li>
+    <li><a href="#unknowns">未確定のこと</a></li>
+  </ol>
+</nav>
+
+<main>
+
+<section id="verdict" aria-labelledby="h-verdict">
+  <h2 id="h-verdict">結論</h2>
+  <div class="answer">
+    <p class="big">作れます。ただし「重くならない」とは約束できません。また、決済と売り方の確認が済むまでは、作り込みを始めないほうが安全です。</p>
+    <p>技術と費用は問題ありません。iPhone は構成プロファイルを1つ入れるだけ、Android は設定画面にホスト名を1行入れるだけで、広告・追跡・解析データ送信の通信を止められます。サーバー代は1人あたり月数円の見込みです。一方で、プロファイルには端末の処理を軽くする設定が存在しないため、約束できるのは「広告や追跡の通信を減らす」ことまでです。</p>
+    <p>同じような広告ブロックの相場は月100〜300円です。電話で高齢のお客様に高い値段で売ると、苦情や「悪質」との評価を招きやすくなります。値段の根拠は、日本語の電話サポートと安心感で示すのが現実的です。</p>
+  </div>
+  <ul class="risks">
+    <li>
+      <span class="chip crit">決済</span>
+      <div>
+        <h3>Stripe が「テレマーケティング」を禁止業種に挙げている</h3>
+        <p>承認をもらっても取り消されることがあるため、主な決済にはしません。国内の決済代行（第一候補は ROBOT PAYMENT）に座組みを説明して打診します。あなたの会社が Stripe の「プラットフォーム」になると提携先の取引すべてに連帯責任を負うため、その形も取りません。<a href="#money">お金の流れと費用</a></p>
+      </div>
+    </li>
+    <li>
+      <span class="chip crit">売り方</span>
+      <div>
+        <h3>「電話勧誘販売」のルールがすべてかかる</h3>
+        <p>紙の法定書面、8日間のクーリング・オフ、効果の説明の制限（電話のトークも景品表示法の「表示」）。守る主体は提携先で、あなたの会社は仕組みで支えます。<a href="#legal">法律のチェックリスト</a></p>
+      </div>
+    </li>
+    <li>
+      <span class="chip warn">障害時</span>
+      <div>
+        <h3>止まるとネットごと止まる端末がある</h3>
+        <p>Android と iOS 18 以前の iPhone は、サーバーに届かないと名前解決ができなくなります。2社2拠点の中継、証明書の自動更新、解約後も素通しで応え続ける作りが必要です。<a href="#architecture">仕組み</a></p>
+      </div>
+    </li>
+    <li>
+      <span class="chip warn">Apple の変更</span>
+      <div>
+        <h3>今回の設定方式が iOS 27 で「非推奨」になった</h3>
+        <p>すぐに使えなくなるわけではありませんが、Apple は構成プロファイルを企業向けと位置づけており、方針が変わるリスクがあります。iOS 27 の公開直後（9月14〜15日）に実機で確かめます。</p>
+      </div>
+    </li>
+  </ul>
+</section>
+
+<section id="premise" aria-labelledby="h-premise">
+  <h2 id="h-premise">決まっていること</h2>
+  <p class="sub">これまでの質問への回答です。このレポートはすべて、この前提で書いています。</p>
+  <dl class="kv">
+    <dt>お客様から見て</dt><dd>提携先のサービスです（提携先の名前で販売・提供）。あなたの会社は、開発と運用を受け持つ裏方です。</dd>
+    <dt>売り方</dt><dd>テレアポの提携先が、既存のお客様に電話で案内します。お客様は高齢の方が多く、提携先は携帯番号とメールアドレスを把握しています。</dd>
+    <dt>お金</dt><dd>お客様は提携先に月額を払います（提携先名義。決済会社は選び直し中）。あなたは提携先から開発料と管理料（固定＋利用者数）を受け取ります。</dd>
+    <dt>規模と時期</dt><dd>初年度は数百〜数千人。半年以内（2027年3月ごろまで）に公開します。</dd>
+    <dt>対象の端末</dt><dd>iPhone（構成プロファイル）と Android（プライベートDNS）。</dd>
+    <dt>記録すること</dt><dd>お客様に見せるのはブロック件数だけです。どのサイトを見たかは記録しません。</dd>
+    <dt>お客様ができること</dt><dd>「このサイトは止めないで」を自分で登録できます（許可リスト）。</dd>
+    <dt>提携先に見せるもの</dt><dd>月次レポート、専用の管理画面、稼働状況ページ、更新履歴ページ。</dd>
+    <dt>運用</dt><dd>ほぼ自動にします。サーバーは自前で、Cloudflare が中心です（アカウントとドメインはこれから用意）。</dd>
+    <dt>法律の判断</dt><dd>弁護士を立てず、あなたが判断します。このレポートでは、リスクを薄めずにそのまま書いています。</dd>
+    <dt>まだ決まっていないこと</dt><dd>会社名、提携先名、月額料金、管理料の金額、サービス名。「ログ溜まらない君」は仮の名前です。</dd>
+  </dl>
+</section>
+
+<section id="scope" aria-labelledby="h-scope">
+  <h2 id="h-scope">できること・できないこと</h2>
+  <p class="sub">プロファイルで変えられるのは「通信」と「送信の設定」だけです。端末の処理そのものを軽くする設定は、プロファイルには存在しません。</p>
+
+  <div class="split">
+    <div>
+      <h3><span class="chip ok">できる</span></h3>
+      <ul>
+        <li>広告・追跡・詐欺サイトのドメインへの接続を、DNS の段階で止める（Wi-Fi でもモバイル通信でも効く）</li>
+        <li>Apple への診断データの自動送信を止める</li>
+        <li>広告トラッキングを制限し、Apple のパーソナライズ広告を止める</li>
+        <li>お客様が「設定 &gt; 一般 &gt; VPNとデバイス管理」から、いつでも1分で外せる</li>
+      </ul>
+    </div>
+    <div>
+      <h3><span class="chip crit">できない</span></h3>
+      <ul>
+        <li>CPU や画面の動きを軽くする</li>
+        <li>バックグラウンド更新・低電力モード・視差効果・通知・キャッシュ削除・アプリの終了を操作する</li>
+        <li>iOS のアップデートを遅らせる、Apple Intelligence を止める</li>
+        <li>YouTube や SNS の中の広告、サイト本体と同じドメインから出る広告を消す</li>
+        <li>VPN アプリを使っている間にブロックする</li>
+        <li>お客様がプロファイルを外すのを止める</li>
+      </ul>
+    </div>
+  </div>
+
+  <h3>「ログが溜まって重くなる」は本当か</h3>
+  <div class="prose">
+    <p><strong>主な原因としては、ほぼ誤りです。</strong>iOS のログは、上限を超えると古いものから自動で消えます。設定の「解析データ」に並ぶ JetsamEvent は「メモリ不足でアプリが閉じられた」という結果の記録で、重さの原因ではありません。「iPhone解析を共有」をオフにしても、止まるのは Apple への送信だけで、端末の中の記録が減るとは Apple のどの文書にも書かれていません。</p>
+    <p>例外は2つあります。Apple のデバッグ用プロファイルを入れっぱなしの端末（ログが増える）と、音量ボタンとサイドボタンの同時押しで誤って作られた診断ファイル（1件で数百MBになることがある）です。どちらも電話サポートで確認と削除を案内できます。</p>
+    <p>なお、仮の名前「VPN ログ溜まらない君」は、VPN でもなく、ログを減らしもしないサービスの名前になっています。お客様向けの名前には使わないでください。</p>
+  </div>
+
+  <h3>本当に重くなる原因（Apple の説明）</h3>
+  <div class="tbl-wrap">
+    <table>
+      <thead><tr><th>原因</th><th>何が起きるか</th><th>お客様への案内</th></tr></thead>
+      <tbody>
+        <tr><th>空き容量の不足</th><td>Apple は1GB以上の空きを保つよう案内している</td><td>設定 &gt; 一般 &gt; iPhoneストレージ</td></tr>
+        <tr><th>バッテリーの劣化</th><td>劣化すると、最大性能が自動で抑えられる</td><td>設定 &gt; バッテリー &gt; バッテリーの状態</td></tr>
+        <tr><th>アップデートの直後</th><td>数日間は裏で処理が続き、電池と温度に響く</td><td>数日待つ</td></tr>
+        <tr><th>低電力モード</th><td>性能とアニメーションを抑え、裏でのダウンロードも止める</td><td>必要なときだけオンにする</td></tr>
+        <tr><th>適応型電力制御（iOS 26）</th><td>対応機種では最初からオン。性能を調整し、残り20%で低電力モードになる</td><td>オンかオフかを確認する</td></tr>
+        <tr><th>高温・低温</th><td>性能が落ちることがある</td><td>充電しながらの長時間利用を避ける</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="prose">
+    <p>プロファイルが効くのは、この表の外側にある「通信の無駄」だけです。重さに困っているお客様には、電話サポートでこの表を案内するほうが効果は大きいはずです。</p>
+  </div>
+
+  <h3>効果の見込み（公開されている計測）</h3>
+  <div class="tbl-wrap">
+    <table>
+      <thead><tr><th>項目</th><th>計測の結果</th><th>出典</th></tr></thead>
+      <tbody>
+        <tr><th>広告の多いページのデータ量</th><td>39% 減（読み込み時間は44%減）。別の研究では25〜34%減だが、表示時間は逆に増えた</td><td><a href="https://arxiv.org/abs/1506.04104">2015</a>・<a href="https://arxiv.org/abs/1705.03193">2017</a></td></tr>
+        <tr><th>電池</th><td>改善は最大3.8%。リストが大きすぎると2.2〜6.5%悪化</td><td><a href="https://softwareprocess.es/pubs/rasmussen2014GREENS-adblock.pdf">2014・Android 実機</a></td></tr>
+        <tr><th>DNS の速さ</th><td>暗号化で中央値 +65ms。ただし28%の人はかえって速くなった</td><td><a href="https://doi.org/10.1145/3487552.3487849">2021</a></td></tr>
+        <tr><th>iPhone の電池</th><td>暗号化 DNS での実測データは見つからない</td><td>—</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="note">
+    <span class="chip warn">売り文句の上限</span>
+    <p>お客様への約束は「広告や追跡用の通信を減らします（効果はサイトによって異なります）」までにしてください。電話のセールストークも景品表示法の「表示」に含まれます。性能をうたうと、消費者庁から原則15日以内に根拠資料の提出を求められ、出せなければ不当表示とみなされます。「重くならない」「速くなる」「ログが溜まらない」「VPN」は、トークにも書面にも使わないでください。</p>
+  </div>
+</section>
+
+<section id="architecture" aria-labelledby="h-arch">
+  <h2 id="h-arch">仕組み</h2>
+  <p class="sub">判定はすべて Cloudflare Workers の一か所で行います。Android だけは、途中に中継サーバーが2台必要です。</p>
+
+  <figure>
+    <div class="diagram">
+      <svg viewBox="0 0 980 452" role="img" aria-label="iPhoneはDoHで直接Workersへ、AndroidはDoTで東京の中継2台を経由してWorkersへ届く。Workersが契約・許可リスト・ブロックリストを順に確認し、許可したものだけ上流に転送する。決済会社からの通知で開通と停止が切り替わり、提携先の画面には集計だけが渡る。">
+        <defs>
+          <marker id="arw" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+            <path d="M0,0 L10,5 L0,10 z" fill="currentColor"/>
+          </marker>
+        </defs>
+
+        <!-- devices -->
+        <rect class="dg-box" x="24" y="70" width="150" height="64" rx="8"/>
+        <text class="dg-t" x="99" y="97" text-anchor="middle">iPhone</text>
+        <text class="dg-s" x="99" y="118" text-anchor="middle">構成プロファイル</text>
+
+        <rect class="dg-box" x="24" y="230" width="150" height="64" rx="8"/>
+        <text class="dg-t" x="99" y="257" text-anchor="middle">Android</text>
+        <text class="dg-s" x="99" y="278" text-anchor="middle">プライベートDNS</text>
+
+        <!-- relay tier (Android only) -->
+        <rect class="dg-frame" x="262" y="190" width="190" height="156" rx="10"/>
+        <text class="dg-a" x="357" y="210" text-anchor="middle">Android だけに必要</text>
+        <rect class="dg-box" x="278" y="224" width="158" height="48" rx="6"/>
+        <text class="dg-t" x="357" y="244" text-anchor="middle">DoT 中継 A</text>
+        <text class="dg-s" x="357" y="262" text-anchor="middle">東京・1社目のVPS</text>
+        <rect class="dg-box" x="278" y="284" width="158" height="48" rx="6"/>
+        <text class="dg-t" x="357" y="304" text-anchor="middle">DoT 中継 B</text>
+        <text class="dg-s" x="357" y="322" text-anchor="middle">東京・2社目のVPS</text>
+
+        <!-- workers -->
+        <rect class="dg-main" x="520" y="40" width="250" height="312" rx="10"/>
+        <text class="dg-t" x="645" y="66" text-anchor="middle">Cloudflare Workers</text>
+        <text class="dg-s" x="645" y="86" text-anchor="middle">フィルタ本体（iPhone・Android 共通）</text>
+
+        <rect class="dg-step" x="536" y="104" width="218" height="48" rx="5"/>
+        <text class="dg-t" x="548" y="124">① 契約中のトークンか</text>
+        <text class="dg-s" x="548" y="142">解約後はブロックせず素通し</text>
+
+        <rect class="dg-step" x="536" y="164" width="218" height="48" rx="5"/>
+        <text class="dg-t" x="548" y="184">② 必須の許可リスト</text>
+        <text class="dg-s" x="548" y="202">Android の接続確認など</text>
+
+        <rect class="dg-step" x="536" y="224" width="218" height="48" rx="5"/>
+        <text class="dg-t" x="548" y="244">③ 本人の許可 → ブロック照合</text>
+        <text class="dg-s" x="548" y="262">ブロックなら 0.0.0.0 を即答</text>
+
+        <rect class="dg-step" x="536" y="284" width="218" height="48" rx="5"/>
+        <text class="dg-t" x="548" y="304">④ 件数だけ数える</text>
+        <text class="dg-s" x="548" y="322">閲覧先は記録しない</text>
+
+        <!-- right column -->
+        <rect class="dg-box" x="836" y="104" width="124" height="64" rx="8"/>
+        <text class="dg-t" x="898" y="131" text-anchor="middle">上流の名前解決</text>
+        <text class="dg-s" x="898" y="152" text-anchor="middle">例: 1.1.1.1</text>
+
+        <rect class="dg-box" x="836" y="250" width="124" height="64" rx="8"/>
+        <text class="dg-t" x="898" y="277" text-anchor="middle">決済会社</text>
+        <text class="dg-s" x="898" y="298" text-anchor="middle">提携先名義</text>
+
+        <rect class="dg-box" x="536" y="384" width="218" height="52" rx="8"/>
+        <text class="dg-t" x="645" y="406" text-anchor="middle">D1・KV</text>
+        <text class="dg-s" x="645" y="425" text-anchor="middle">契約・トークン・許可リスト</text>
+
+        <rect class="dg-box" x="836" y="384" width="124" height="52" rx="8"/>
+        <text class="dg-t" x="898" y="406" text-anchor="middle">提携先の画面</text>
+        <text class="dg-s" x="898" y="425" text-anchor="middle">月次レポート</text>
+
+        <!-- arrows -->
+        <line class="dg-line" x1="174" y1="102" x2="518" y2="102" marker-end="url(#arw)"/>
+        <text class="dg-l" x="346" y="92" text-anchor="middle">DoH（443番）</text>
+        <text class="dg-m" x="346" y="120" text-anchor="middle">/dns-query/&lt;token&gt;</text>
+
+        <line class="dg-line" x1="174" y1="254" x2="276" y2="248" marker-end="url(#arw)"/>
+        <line class="dg-line" x1="174" y1="270" x2="276" y2="308" marker-end="url(#arw)"/>
+        <text class="dg-l" x="218" y="236" text-anchor="middle">DoT（853番）</text>
+        <text class="dg-m" x="99" y="316" text-anchor="middle">&lt;token&gt;.dns.〇〇.jp</text>
+
+        <line class="dg-line" x1="436" y1="248" x2="518" y2="248" marker-end="url(#arw)"/>
+        <line class="dg-line" x1="436" y1="308" x2="518" y2="308" marker-end="url(#arw)"/>
+        <text class="dg-l" x="477" y="238" text-anchor="middle">HTTPS</text>
+
+        <line class="dg-line" x1="770" y1="136" x2="834" y2="136" marker-end="url(#arw)"/>
+        <text class="dg-l" x="802" y="126" text-anchor="middle">許可分</text>
+
+        <line class="dg-line" x1="836" y1="282" x2="772" y2="282" marker-end="url(#arw)"/>
+        <text class="dg-l" x="804" y="272" text-anchor="middle">開通・停止</text>
+
+        <line class="dg-line" x1="645" y1="354" x2="645" y2="382" marker-start="url(#arw)" marker-end="url(#arw)"/>
+        <text class="dg-l" x="656" y="372">参照</text>
+
+        <line class="dg-line" x1="754" y1="410" x2="834" y2="410" marker-end="url(#arw)"/>
+        <text class="dg-l" x="794" y="400" text-anchor="middle">集計のみ</text>
+      </svg>
+    </div>
+    <figcaption>問い合わせの流れ。答えは同じ道を戻ります。ブロックした通信は上流に出さず、Workers がその場で「行き先なし（0.0.0.0）」を返します。緑の点線の中が Android のためだけに増える部分で、費用と障害リスクの大半はここにあります。</figcaption>
+  </figure>
+
+  <div class="prose">
+    <p>お客様ごとに、推測できない短い英数字の「トークン」を発行します。iPhone では構成プロファイルの中の URL に、Android では手で入力するホスト名にこのトークンが入り、誰の問い合わせかを見分けます。Android で入力してもらうのは <code>k7m3q9.dns.〇〇.jp</code> のような文字列です。電話で読み上げることもあるので、0 と o、1 と l のような紛らわしい文字は使いません。</p>
+  </div>
+
+  <h3>Android: サーバーに届かないと、ネットごと止まる</h3>
+  <div class="prose">
+    <p>Android の「プライベートDNS」は、指定したサーバーに届かないと、その端末を「インターネット接続なし」として扱います。普通のDNSには戻りません。モバイル回線でも同じです。さらに Cloudflare だけでは Android が使う方式（DoT・853番）を受けられないため、東京の VPS を2社に分けて中継を置きます。次の対策はどれも省けません。</p>
+  </div>
+  <div class="tbl-wrap">
+    <table>
+      <thead><tr><th>起きること</th><th>Android への影響</th><th>対策</th></tr></thead>
+      <tbody>
+        <tr><td>中継サーバーが両方止まる</td><td>全員がネット不通</td><td>2社・2拠点に置く。Workers から定期的に確認し、止まった方を自動でDNSから外す</td></tr>
+        <tr><td>証明書の期限切れ</td><td>全員がネット不通</td><td>自動更新と残り日数の監視。Let's Encrypt の有効期間は2027年2月に64日、2028年2月に45日へ短くなる</td></tr>
+        <tr><td>Android の接続確認用の通信を誤ってブロック</td><td>全員がネット不通</td><td><code>*.metric.gstatic.com</code> などを、利用者も外せない固定の許可リストに入れる。リスト更新のたびに自動テスト</td></tr>
+        <tr><td>解約した人の接続を拒否する</td><td>その人がネット不通</td><td>拒否せず「素通し」（ブロックせず普通に答える）に切り替え、設定の外し方を案内する</td></tr>
+        <tr><td>開通直後で、新しいトークンがまだ行き渡っていない</td><td>その人がネット不通</td><td>形式が正しい未知のトークンは一時的に素通しにし、裏で契約を確認する</td></tr>
+        <tr><td>853番を塞いでいる Wi-Fi</td><td>その Wi-Fi で不通</td><td>一時的に「自動」に戻す方法を FAQ と電話で案内する</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3>iPhone: 設定方式が iOS 27 で「非推奨」になる</h3>
+  <div class="prose">
+    <p>今回使う DNS 設定の方式（<code>com.apple.dnsSettings.managed</code>）は、iOS 27 で「非推奨」とされました。手で入れるプロファイルは引き続き使えますが、将来使えなくなる可能性があります。公開前に iOS 27 の実機で確認し、後継の方式への移り方を用意しておきます。</p>
+    <p>iPhone も、何も設定しなければ、サーバーに届かないときは名前解決に失敗します（Apple は「プライバシーを損なうより通信を失敗させる」と説明しています）。iOS 26 で加わった「AllowFailover」を入れると通常の DNS に切り替わる仕様ですが、どんな失敗で切り替わるかは未確定です。iOS 18 以前ではこの設定が効かないため、サーバーの二重化と「止めない運用」は iPhone のためにも必要です。</p>
+  </div>
+
+  <h3>iPhone に入れるプロファイルの中身</h3>
+  <div class="tbl-wrap">
+    <table>
+      <thead><tr><th>入れるもの</th><th>値</th><th>ねらい</th></tr></thead>
+      <tbody>
+        <tr><th>DNS 設定</th><td><code>DNSProtocol</code> HTTPS<br><code>ServerURL</code> https://dns.〇〇.jp/dns-query/&lt;token&gt;<br><code>AllowFailover</code> true</td><td>853番を塞ぐ Wi-Fi でも通る 443番を使う。障害時は通常の DNS に切り替える（条件は実機で確認）</td></tr>
+        <tr><th>診断データ</th><td><code>allowDiagnosticSubmission</code> false</td><td>Apple への自動送信を止める（端末内の記録が減るわけではない）</td></tr>
+        <tr><th>広告の追跡</th><td><code>forceLimitAdTracking</code> true<br><code>allowApplePersonalizedAdvertising</code> false</td><td>アプリの追跡と、Apple のパーソナライズ広告を止める</td></tr>
+        <tr><th>表示名・同意文</th><td><code>PayloadOrganization</code> 提携先の正式名<br><code>ConsentText</code> 日本語の同意文</td><td>何をするか、何を記録しないか、消し方を、インストール前に必ず表示する</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <ul class="plain">
+    <li><strong>入れないもの</strong>: 削除の禁止とDNSオフの禁止（監視モード専用。入れるとインストールに失敗する例もある）、VPN、証明書、MDM 登録（詐欺プロファイルと同じ見た目になる）。</li>
+    <li><strong>実機で確かめること</strong>: URL にトークンを入れる方式が iPhone で動くか（だめならホスト名に入れる形に切り替える）、3つの制限が手で入れたプロファイルでも効くか。</li>
+  </ul>
+
+  <h3>「閲覧先を記録しない」を本当に守るために</h3>
+  <ul class="plain">
+    <li>Workers のログ機能は、新しく作ると最初からオンになっています。オフにしないと、「記録しません」という説明と中身が食い違います。</li>
+    <li>数えるのはブロック件数だけです。集計にはドメイン名を書き込みません。</li>
+    <li>iPhone の問い合わせの一部は URL の中に入って届きます。URL がどこにも残らない設定になっているかは、実装時に確認が必要です（未確定）。</li>
+  </ul>
+</section>
+
+<section id="onboarding" aria-labelledby="h-onboarding">
+  <h2 id="h-onboarding">申込から設定完了まで</h2>
+  <p class="sub">電話をつないだまま、申込から設定完了まで進められる流れにします。お客様がいまどこまで進んだかは、オペレーターの画面にその場で出ます。</p>
+  <ol class="steps">
+    <li>
+      <div>
+        <h3>電話で案内する</h3>
+        <p class="who">提携先のオペレーター</p>
+        <p>最初に事業者名・担当者名・勧誘が目的であることを告げます。承認済みのトークだけを使い、料金・自動更新・解約方法・クーリング・オフを説明して、ご家族への相談も勧めます。カード番号は聞きません。</p>
+      </div>
+    </li>
+    <li>
+      <div>
+        <h3>申込リンクを送る</h3>
+        <p class="who">オペレーター画面から</p>
+        <p>オペレーター画面のボタンで、そのお客様専用のリンクを SMS とメールに同時に送ります。SMS は、携帯4社の審査を通った「0005」で始まる共通番号から送ります。本文の冒頭に提携先名を入れ、提携先の公式ドメインの URL をそのまま載せます（短縮 URL は使わず、返信も求めません）。架電の数日前に郵便などで「0005 から届きます」「URL は https://setup.〈提携先のドメイン〉/ で始まります」と知らせておくと、偽 SMS と見分けてもらえます。</p>
+        <p>なお、フィッシング対策協議会は2026年7月に「正規のメッセージには URL を載せない」ことを勧めています。URL を載せずに、ドメインを口頭で伝えて短いコードを入力してもらう形や、認証済みの表示が出る RCS（KDDI は提供中、ドコモは2026年冬の予定）も、あわせて比べます。</p>
+      </div>
+    </li>
+    <li>
+      <div>
+        <h3>申し込んで同意する</h3>
+        <p class="who">お客様</p>
+        <p>お客様ご自身で氏名を入力し、書面の送り先の住所を確かめます。1〜2画面で、照合するもの・保存しないもの・効果の限界・料金・解約・クーリング・オフを示し、最初はチェックの入っていない同意欄に、お客様自身がチェックします。</p>
+      </div>
+    </li>
+    <li>
+      <div>
+        <h3>スマホに設定を入れる</h3>
+        <p class="who">お客様（電話で案内を受けながら）</p>
+        <p><strong>iPhone</strong>: 「プロファイルをダウンロード」を押し、8分以内に「設定」を開いて「プロファイルがダウンロードされました」→「インストール」→ パスコード → 同意文 →「完了」。LINE などのアプリの中のブラウザでは失敗することがあるので、Safari で開くよう案内します。「盗難デバイスの保護」がオンだと外出先では入れられない場合があるため、自宅で設定してもらいます。</p>
+        <p><strong>Android</strong>: 「ホスト名をコピー」を押し、「設定 &gt; ネットワークとインターネット &gt; プライベートDNS」（Galaxy は「接続 &gt; その他の接続設定」）に貼り付けて保存します。</p>
+      </div>
+    </li>
+    <li>
+      <div>
+        <h3>設定完了を確かめる</h3>
+        <p class="who">自動</p>
+        <p>そのお客様のトークンから最初の問い合わせが届いた瞬間に、オペレーター画面が「設定完了」に変わります。記録するのは「届いた」という事実だけで、どのサイトかは記録しません。お客様の画面にも「このフィルターが効いています」と出ます。</p>
+      </div>
+    </li>
+    <li>
+      <div>
+        <h3>カードを登録する</h3>
+        <p class="who">お客様（提携先の決済画面）</p>
+        <p>設定が済んでから、カードを登録します。先に設定できるスマホかを確かめられるので、返金が起きません。初回の課金日はクーリング・オフの期間が過ぎた後なので、この時点では課金されず、本人認証（3-Dセキュア）は登録のときの1回だけです。つまずいたら何度も試させず、「後日お支払いのリンクをお送りします」に切り替えます。確認番号・パスコード・カード番号は、口に出さないようお願いします。</p>
+      </div>
+    </li>
+    <li>
+      <div>
+        <h3>書面を郵送する</h3>
+        <p class="who">システムが作成、提携先が発送</p>
+        <p>契約書面に、設定ガイド（正しい URL）・困ったときの外し方・クーリング・オフの方法を同封します。到達を記録し、初回の課金日を「到達日＋8日＋余裕」に合わせます。</p>
+      </div>
+    </li>
+    <li>
+      <div>
+        <h3>初回の課金</h3>
+        <p class="who">自動</p>
+        <p>課金日の数日前に、メールと SMS で初回の課金日と金額を知らせます。以後は毎月同じ日に課金されます。</p>
+      </div>
+    </li>
+    <li>
+      <div>
+        <h3>解約・クーリング・オフ</h3>
+        <p class="who">提携先の管理画面から</p>
+        <p>受け付けると、自動で返金・停止し、ブロックせずに答える「素通し」に切り替えたうえで、外し方をお送りします。消し忘れても、ネットが止まることはありません。</p>
+      </div>
+    </li>
+  </ol>
+  <h3>オペレーター画面に出すもの</h3>
+  <ul class="plain">
+    <li>お客様の進み具合をその場で表示する: 送信 → リンクを開いた → 機種とブラウザの判定（LINE などのアプリ内ブラウザなら警告）→ 申込 → プロファイルのダウンロード（8分のカウントダウン）→ 設定完了 → カード登録の成否</li>
+    <li>いまの段階に合わせた台本と、機種別の画面画像</li>
+    <li>本人認証に失敗したときの「後日お支払いリンクを送る」ボタン</li>
+    <li>説明した項目のチェック（事業者名・料金・解約方法・クーリング・オフ）、再勧誘をしない印、書面の発送状況、クーリング・オフの受付</li>
+    <li>誰がどのお客様の画面を見たかの記録</li>
+  </ul>
+  <h3>やってはいけないこと</h3>
+  <ul class="plain">
+    <li>短縮 URL、オペレーターの携帯番号（070・080・090）から手で送る SMS、海外経由の SMS、「返信してください」と求めること</li>
+    <li>カード番号・パスコード・確認番号を聞くこと、代わりに入力すること、お客様のスマホを遠隔操作すること</li>
+    <li>ダウンロードからインストールまでの間に説明を挟んで、8分を過ぎさせること</li>
+    <li>本人認証を何度も試させて、カードをロックさせること</li>
+    <li>「無料お試し」を大きく書き、初回の課金日・金額・解約方法を小さく書くこと</li>
+  </ul>
+  <p class="src">お客様向けの画面は、本文18px前後、ボタンは画面幅いっぱいで高さ56px程度、1画面に1つの操作、を基本にします（デジタル庁デザインシステムと WCAG 2.2 を参考）。</p>
+</section>
+
+<section id="money" aria-labelledby="h-money">
+  <h2 id="h-money">お金の流れと費用</h2>
+  <p class="sub">お客様のお金は提携先に直接入り、あなたは資金に触れません。ただし、電話勧誘販売を受け入れてくれる決済会社を見つけることが最初の関門です。</p>
+
+  <div class="note crit">
+    <span class="chip crit">最初の関門</span>
+    <p><strong>Stripe は「テレマーケティング」を禁止業種に挙げています</strong>（2026年9月11日に公式ページで確認）。項目は「テレマーケティング」の一語だけで、定義も除外条件もありません。Stripe 自身の解説は「電話で製品やサービスを販売する事業者」と説明しており、お客様が自分でカードを入力する形でも対象外とは言えません。使えるのは Stripe から書面で事前承認をもらえた場合だけで、その承認も取り消されることがあると Stripe は明記しています。</p>
+    <p><strong>おすすめ: Stripe を主な決済にしない。</strong>国内の決済代行に、座組みを正直に説明して打診します。システムは開通・停止を自前の契約データで判断する作りにし、決済会社を後から差し替えられるようにします。</p>
+  </div>
+  <h3>国内の決済代行の候補</h3>
+  <div class="tbl-wrap">
+    <table>
+      <thead><tr><th>事業者</th><th>電話勧誘販売</th><th>毎月の自動課金</th><th>口座振替など</th><th>公開されている料金</th></tr></thead>
+      <tbody>
+        <tr><th>ROBOT PAYMENT（サブスクペイ）</th><td>非公開・要打診。決済会社が加盟店の代理でカード会社と契約する形</td><td>可（追加費用なし）</td><td>口座振替あり（1件85円）</td><td class="num">カード 2.5%〜＋7円/件</td></tr>
+        <tr><th>GMO ペイメントゲートウェイ</th><td>非公開・要打診</td><td>可</td><td>口座振替・キャリア決済あり</td><td>見積</td></tr>
+        <tr><th>SP.LINKS</th><td>非公開・要打診</td><td>可</td><td>口座振替・キャリア決済あり</td><td>問い合わせ</td></tr>
+        <tr><th>VeriTrans4G</th><td>非公開・要打診</td><td>可</td><td>Web 口座振替、d払い・au PAY など</td><td>非公開</td></tr>
+        <tr><th>PAY.JP</th><td>否決の可能性が高い</td><td>可</td><td>—</td><td class="num">3.3%</td></tr>
+        <tr><th>ゼウス・Square・三菱UFJニコス</th><td>取り扱わないと明記</td><td>—</td><td>—</td><td>—</td></tr>
+      </tbody>
+      <caption>第一候補は ROBOT PAYMENT です。カードの自動課金と口座振替を1社で扱え、国際ブランドの規則が決済代行に禁じている「電話営業をする加盟店への決済提供」の形に当たりにくいと考えられます（推論）。GMO・SP.LINKS・VeriTrans4G にも並行して打診します。この表は、別担当による検証が通信エラーで未実施です（主な点は一次情報で再確認済み）。</caption>
+    </table>
+  </div>
+  <ul class="plain">
+    <li>どの決済会社を通しても、最後はカード会社が審査します。日本クレジット協会の規則で、加盟時に「電話勧誘販売をしているか」の確認が義務づけられているので、隠さず申告します。</li>
+    <li><strong>審査に出すもの</strong>: 座組みの説明資料、提携先名義の特商法表記ページ、法定書面のひな型、トークスクリプトと通話録音の方針、苦情対応の体制と台帳、中途解約の方針、決算書2期、登記事項証明書。</li>
+    <li>口座振替の1件85円は、月300〜1,000円の商品だと売上の8.5〜28%にあたります。年払いなども検討します。</li>
+    <li>不審請求（チャージバック）は1件で数か月分の売上が消えます（Stripe の場合は1件1,500円）。発生率を毎月見ます。</li>
+  </ul>
+
+  <h3>それでも Stripe を使う場合</h3>
+  <dl class="kv">
+    <dt>承認</dt><dd>座組み全体を書いて照会し、提携先の法人名と販売方法を特定した書面（メール）で承認をもらって保存します。チャットでの「大丈夫そう」は承認になりません。</dd>
+    <dt>アカウント</dt><dd><strong>提携先が自分で開設します。</strong>あなたの会社が Connect の「プラットフォーム」になると、提携先のすべての取引について、上限なしの連帯責任を負います（Connect の規約 3.1・7）。</dd>
+    <dt>お客様に見える名前</dt><dd>決済画面・明細・領収書は、すべて提携先の名前にします。</dd>
+    <dt>備え</dt><dd>アカウントが止められたときに備えて、代わりの決済手段を先に確保しておきます。</dd>
+  </dl>
+
+  <h3>あなたの管理料の受け取り方</h3>
+  <div class="prose">
+    <p>どの決済会社を使っても、固定分と利用者数分をまとめて、あなたが提携先に毎月適格請求書を出し、銀行振込で受け取ります。利用者数の根拠は月次レポートに自動で載せます。提携先が1社のうちは会計ソフトで十分です。</p>
+  </div>
+
+  <h3>カード決済で知っておくこと</h3>
+  <ul class="plain">
+    <li><strong>本人認証（3-Dセキュア）</strong>: 日本では2025年3月末から、ネット決済は原則すべて本人認証が必要です。最初に1回通せば、毎月の課金では不要です。高齢の方がつまずくのはこの1回なので、オペレーター向けに「失敗の原因別の案内」を用意します。決済会社が対応していれば、Apple Pay と Google Pay も使えるようにします（Stripe では本人認証の対象外）。</li>
+    <li><strong>オペレーターはカード番号を聞き取りません。</strong>割賦販売法のカード情報保護のルールに触れるためです。</li>
+    <li><strong>カード以外</strong>: 国内の決済代行なら、口座振替やキャリア決済も選べます（Stripe は口座振替とキャリア決済に対応せず、PayPay は継続課金に非対応）。カードを持たない方をどう扱うかは、決めていただく必要があります。</li>
+  </ul>
+
+  <h3>クーリング・オフに合わせて、初回の課金日を後ろにずらす</h3>
+  <ul class="plain">
+    <li>電話勧誘販売なので、お客様は書面を受け取った日から8日間クーリング・オフできます。はがきやメールを「出した時点」で成立し、提供済みの分も含めて全額を返す必要があります。書面の電子交付は手続きが重いため、紙で郵送して到達を記録するのが現実的です。</li>
+    <li>そこで、初回の課金日を「書面の到着＋8日＋郵送の遅れ分」（例: 申込から約3週間後）に設定し、それまでの解約は課金前に止めます。到着を確認したら、初回の課金日を合わせ直します。</li>
+    <li>「無料お試し」とは打ち出しません。決済各社は料金が分かりにくいお試しを嫌うため、申込画面・書面・電話のすべてで「初回の課金日と金額」をはっきり示します。</li>
+    <li>課金日の数日前に、メールと SMS で初回の課金日と金額を知らせます。</li>
+  </ul>
+
+  <h3>サーバー費用の目安</h3>
+  <div class="prose">
+    <p>前提は「1人1台、1台あたり1日3,000件の問い合わせ（多い人は1万件）」です。<strong>この件数は実測値がなく、まだ仮定です。</strong>公開前に、件数だけを数える試験用の仕組みで1〜2週間計測してから確定します。Cloudflare の請求はドル建てです。</p>
+  </div>
+  <div class="tbl-wrap">
+    <table>
+      <thead><tr><th class="num">利用者数</th><th class="num">Workers（1日3,000件/台）</th><th class="num">Workers（1日1万件/台）</th><th>Android 用の VPS 2台</th></tr></thead>
+      <tbody>
+        <tr><td class="num">300人</td><td class="num">約 $10</td><td class="num">約 $30</td><td>Lightsail 東京 $5×2、または ConoHa 512MB ¥751×2</td></tr>
+        <tr><td class="num">1,000人</td><td class="num">約 $30</td><td class="num">約 $97</td><td>同上</td></tr>
+        <tr><td class="num">3,000人</td><td class="num">約 $88</td><td class="num">約 $289</td><td>同上（足りるかは要確認）</td></tr>
+        <tr><td class="num">5,000人</td><td class="num">約 $145</td><td class="num">約 $481</td><td>増強が必要な見込み</td></tr>
+      </tbody>
+      <caption>Workers 有料プラン（月 $5。1,000万リクエストと CPU 3,000万ミリ秒込み、超過は100万リクエストあたり $0.30）で試算。Android 側の試算（1日2,000件/台）では 500人で月 $20〜30、3,000人で月 $75〜120。</caption>
+    </table>
+  </div>
+  <ul class="plain">
+    <li>標準の前提なら、サーバー代は1人あたり月およそ3セントです。月額数百円のサービスにとって、サーバー代は小さな割合にとどまります。</li>
+    <li>費用が大きくなりやすいのは、法定書面の郵送、SMS の送信、電話サポートの人件費です。これらは提携先との分担を決める必要があります。</li>
+    <li>許可リストを問い合わせのたびに読みに行く作りにすると、1,000人で月 $40ほど増えます。メモリに置いて数分ごとに読み直す作りにします。</li>
+    <li>無料プランは1日10万件で止まり、名前解決ができなくなります。最初から有料プランにします。</li>
+  </ul>
+</section>
+
+<section id="legal" aria-labelledby="h-legal">
+  <h2 id="h-legal">法律のチェックリスト</h2>
+  <p class="sub">販売と提供の主体は提携先、あなたの会社は仕組みを作る受託者、という前提での整理です。弁護士を立てない前提なので、判断が分かれる点は安全側を選んでいます。</p>
+
+  <h3>誰が何を負うか</h3>
+  <div class="tbl-wrap">
+    <table>
+      <thead><tr><th>法律・規約</th><th>提携先（販売・提供の主体）</th><th>あなたの会社（受託者）</th></tr></thead>
+      <tbody>
+        <tr><th>特定商取引法</th><td>電話勧誘販売の事業者として、勧誘・書面・クーリング・オフの義務を負う</td><td>書面の自動作成、返金と停止の自動化などの仕組みを用意する</td></tr>
+        <tr><th>景品表示法</th><td>Web・書面・電話トークの表示に責任を負う</td><td>効果の文言は作らない（作ると責任を問われる範囲が未確定）</td></tr>
+        <tr><th>電気通信事業法</th><td>事業を営む者。届出は不要の見込みだが、通信の秘密を守る</td><td>運用に携わる者として、通信の秘密を守る</td></tr>
+        <tr><th>個人情報保護法</th><td>利用目的の公表、プライバシーポリシー、委託先の監督</td><td>委託先として安全管理。再委託先（Cloudflare など）も管理する</td></tr>
+        <tr><th>決済会社の規約</th><td>加盟店として契約する</td><td>連携部分を作る。カード情報は扱わない。決済の「プラットフォーム」にはならない</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3>配布前に必ずやること</h3>
+  <div class="tbl-wrap">
+    <table>
+      <thead><tr><th>やること</th><th>担当</th><th>根拠</th></tr></thead>
+      <tbody>
+        <tr><td>中身を「名前解決だけ」に限る（VPN・プロキシ・通信の中継は入れない）。これで登録・届出は不要の見込み。利用者が増えても、届出が必要な「ドメイン名電気通信役務」にはあたらない</td><td>あなた</td><td>電気通信事業法 第164条第1項第3号</td></tr>
+        <tr><td>閲覧先と IP を記録しない作りにし、設定した証跡を残す。通信の秘密は届出が不要でも適用され、携わる者には3年以下の拘禁刑または200万円以下の罰金がある</td><td>あなた</td><td>同法 第4条・第179条</td></tr>
+        <tr><td>通信の秘密についての同意を、申込画面とプロファイルの同意文の2段で取る。事前に・はっきりと・最初からチェックを入れず・撤回しやすく。同意日時と規約の版を記録する</td><td>提携先（画面はあなた）</td><td>総務省「同意取得の在り方に関する参照文書」</td></tr>
+        <tr><td>電話勧誘販売のルールを守る（下を参照）</td><td>提携先（仕組みはあなた）</td><td>特定商取引法 第16〜24条</td></tr>
+        <tr><td>効果の表示を「測れる事実」に限り、根拠資料を保管する</td><td>提携先</td><td>景品表示法（電話での説明も「表示」）</td></tr>
+        <tr><td>規約の免責は「故意・重過失を除き、軽過失は直近◯か月分の料金が上限」の形にする。全部免責は無効</td><td>提携先（案はあなた）</td><td>消費者契約法 第8条</td></tr>
+        <tr><td>個人データの委託契約を結ぶ（Cloudflare などへの再委託の承諾を含む）</td><td>両者</td><td>個人情報保護法 第25条・第27条</td></tr>
+        <tr><td>名前・プロファイル名・ドメインに「iPhone」「アイフォン」を入れない。Apple のロゴを使わない</td><td>両者</td><td>Apple の商標ガイドライン</td></tr>
+        <tr><td>プロファイルの名前・説明と実際の動作を一致させる。記録・広告の差し替え・転送はしない</td><td>両者</td><td>刑法 第168条の2</td></tr>
+        <tr><td>決済会社に電話勧誘販売であることを申告し、審査資料（特商法表記、書面のひな型、トーク、苦情対応の体制）を出す</td><td>提携先</td><td>日本クレジット協会の自主規制規則</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3>電話勧誘販売で守ること</h3>
+  <ul class="plain">
+    <li>電話の後にお客様が Web で申し込んでも、「通信販売」ではなく「電話勧誘販売」です。</li>
+    <li>電話の最初に、事業者名・担当者名・サービスの種類・勧誘が目的であることを告げます。断った人には、もう一度勧誘しません。</li>
+    <li>申込書面と契約書面を渡します。電子交付には、本人の端末での確認、氏名の入力による承諾、承諾を示す紙の書面などが必要で、不備があると書面を渡していない扱いになります。<strong>紙の郵送を標準にします。</strong></li>
+    <li>クーリング・オフは書面を受け取った日から8日です。提供済みの分も請求できず、受け取った代金は返します。Stripe の決済手数料は戻らないため、提携先の負担になります。</li>
+    <li>事実と違う説明は禁止で、根拠資料を出せなければ「事実と違う説明」とみなされます。「軽くなる」はこれにあたります。</li>
+    <li>高齢者の判断力の不足に乗じた契約は禁止されています。加齢で判断力が落ちた人の不安をあおる勧誘は、消費者契約法で取り消されます。</li>
+    <li>既存顧客向けの適用除外（過去1年に2回以上の取引など）には頼らず、全員に書面とクーリング・オフを行います。</li>
+  </ul>
+
+  <h3>提携先に入れてほしい運用</h3>
+  <ul class="plain">
+    <li>通話の録音と、トークの定期的なチェック</li>
+    <li>「ご家族と相談してから」と案内すること、判断が難しそうな方とは契約しない社内の基準</li>
+    <li>書面の写しを家族にも送れる選択肢</li>
+    <li>話の理解度を確かめる質問を台本に入れること、オペレーターの成約報酬が無理な勧誘につながらないようにすること</li>
+  </ul>
+
+  <h3>あなたの会社を守るために</h3>
+  <ul class="plain">
+    <li><strong>業務委託契約に入れる項目</strong>: 勧誘・表示・書面・クーリング・オフの受付は提携先の責任であること、トークと表示をあなたが事前に確認して断れる権利、苦情が多いときに新規受付を止める権利、あなたの責任の上限、個人データの委託と再委託（Cloudflare など）の承諾、稼働の目標と障害時の連絡方法、契約終了時にお客様の DNS を突然止めない手順、管理料の数え方。</li>
+    <li><strong>取引の法律による保護</strong>: 2026年1月に施行された取引適正化法（旧下請法）で守られるかは、提携先の資本金・従業員数と委託の種類で決まります。提携先が自社サービスのために発注するシステム開発は、対象外になることもあります。</li>
+    <li><strong>行政の目</strong>: 電話勧誘販売の行政処分は国だけでなく、お客様がいる都道府県の知事も行えます。全国に電話をかけると、複数の自治体から調査を受けることがあり得ます。</li>
+    <li><strong>法改正の動き</strong>: 消費者庁の検討会が2026年8月に特商法の見直しの中間取りまとめを示しました。2027年の通常国会での法案化に注意が必要です。</li>
+  </ul>
+
+  <div class="note">
+    <span class="chip warn">見た目の問題</span>
+    <p>「電話のあとに構成プロファイルを入れさせる」流れは、公的機関が詐欺の手口として注意を呼びかけている形と似ています。また Apple は、構成プロファイルを企業向けの仕組みと位置づけています。中身を DNS 設定と3つの制限だけにして全文を公開し、配布は提携先の公式サイトからだけ、短縮 URL は使わず、画面に出るプロファイル名と組織名を書面で先に知らせてください。</p>
+  </div>
+  <p class="src">出典: <a href="https://laws.e-gov.go.jp/law/359AC0000000086">電気通信事業法</a>・<a href="https://www.soumu.go.jp/main_content/000735985.pdf">総務省 同意取得の参照文書</a>・<a href="https://www.no-trouble.caa.go.jp/what/telemarketing/">消費者庁 特商法ガイド（電話勧誘販売）</a>・<a href="https://www.caa.go.jp/notice/assets/consumer_transaction_cms101_230421_03.pdf">電子交付ガイドライン</a>・<a href="https://laws.e-gov.go.jp/law/412AC0000000061">消費者契約法</a>・<a href="https://www.jc3.or.jp/threats/examples/article-409.html">JC3 の注意喚起</a>・<a href="https://developer.apple.com/documentation/devicemanagement/configuring-multiple-devices-using-profiles">Apple</a></p>
+</section>
+
+<section id="lists" aria-labelledby="h-lists">
+  <h2 id="h-lists">止める通信・止めない通信</h2>
+  <p class="sub">判定は4段階で、上の段ほど優先されます。止めすぎると「スマホが壊れた」に見えるため、通す側のリストのほうが大事です。</p>
+  <ol class="steps">
+    <li>
+      <div>
+        <h3>必須の保護リスト（常に通す・お客様も外せない）</h3>
+        <p>Apple のアクティベーション・通知・アップデート・iCloud・App Store、Android の接続確認（<code>*.metric.gstatic.com</code> など）、Firebase、Facebook ログイン。ここを塞ぐと Android はネット不通になり、iPhone も通知やアップデートが止まります。</p>
+      </div>
+    </li>
+    <li>
+      <div>
+        <h3>お客様ごとの許可・一時停止・ワンタップ設定</h3>
+        <p>「30分だけ止める」ボタン、「ポイ活・アフィリエイトを優先」「ゲームの報酬広告を見る」のワンタップ設定、サイト名の手入力（上級者向け）。電話で提携先が代わりに設定することもできます。</p>
+      </div>
+    </li>
+    <li>
+      <div>
+        <h3>日本向けの共通許可リスト</h3>
+        <p>A8.net・もしも・バリューコマース・楽天アフィリエイト・afb・アクセストレードの計測、Google 検索広告と Amazon のリンク、LINE・Yahoo!・PayPay、アプリへのリンク（Branch・Adjust・OneLink）、銀行アプリの不正検知（実機で確かめるまでは通す）。</p>
+      </div>
+    </li>
+    <li>
+      <div>
+        <h3>ブロックリスト</h3>
+        <p>HaGeZi の Normal（約18万件）を標準にし、ベータ版で Light（約3.5万件）と比べて決めます。i-mobile・nend・AMoAd・Zucks・fluct・Geniee・Yahoo!広告といった日本の主な広告網は、Light の段階で止まります。</p>
+      </div>
+    </li>
+  </ol>
+
+  <div class="tbl-wrap">
+    <table>
+      <thead><tr><th>使わないリスト</th><th>理由</th></tr></thead>
+      <tbody>
+        <tr><th>280blocker のリスト</th><td>個人利用限定で、商用利用が禁止されている</td></tr>
+        <tr><th>豆腐フィルタ</th><td>営利目的での利用が禁止されている</td></tr>
+        <tr><th>StevenBlack の統合版</th><td>非商用ライセンスの元リストが混ざっている</td></tr>
+        <tr><th>HaGeZi Pro++・Ultimate</th><td>作者自身が「機能を壊すことがある」と警告している</td></tr>
+        <tr><th>Apple のテレメトリ遮断リスト</th><td>アップデートや診断に使うドメインまで止めてしまう</td></tr>
+        <tr><th>OISD small</th><td>日本の広告網を大きく取りこぼす</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <ul class="plain">
+    <li><strong>強さの選択は最初は付けません。</strong>高齢のお客様が迷い、電話サポートが増え、検証の組み合わせも倍になるためです。調整は一時停止とワンタップ設定で行います。</li>
+    <li><strong>「閲覧先を記録しない」ことの裏返し</strong>として、開けないサイトの原因をお客様本人にも示せません。本人が別に同意したときだけ、10分間、自分の遮断履歴を画面で見られる「診断モード」は、第2段階で検討します。</li>
+    <li><strong>実機で必ず確かめるもの</strong>: メルカリ、主な銀行・決済アプリ、LINE、楽天、Yahoo!ショッピング、JR・航空会社のアプリ、各キャリアの留守番電話と +メッセージ。</li>
+    <li><strong>更新は自動で</strong>: 上流のリストは8時間ごとに更新されるので、1日に1〜数回組み直します。件数が急に変わったときは配信を止め、必須の保護リストが通るかを毎回自動でテストします。</li>
+    <li><strong>ライセンス</strong>: HaGeZi は GPL-3.0 です。サーバーの中で使うだけならソースを公開する義務は生じないと読めます（確度は中）。組み合わせたリストは配布せず、出典を示すページを置きます。</li>
+  </ul>
+</section>
+
+<section id="partner" aria-labelledby="h-partner">
+  <h2 id="h-partner">提携先に見せるもの</h2>
+  <p class="sub">どれも実データから自動で作ります。閲覧先や、個人ごとの閲覧情報は出しません。</p>
+  <div class="tbl-wrap">
+    <table>
+      <thead><tr><th>画面・資料</th><th>中身</th><th>更新</th></tr></thead>
+      <tbody>
+        <tr><th>月次レポート</th><td>販売の流れ（リンク送信・開封・申込完了・決済まで進まなかった件数）、契約（有効契約・無料期間中・新規・クーリング・オフ・解約・支払い失敗と回復）、設定完了率と OS 別の内訳、ブロック件数の合計と1人あたりの中央値、稼働率と障害時間、ブロックリストの更新回数、問い合わせ件数、管理料の算定根拠</td><td>毎月1日にメールで通知</td></tr>
+        <tr><th>専用の管理画面</th><td>上の数字の推移。お客様ごとの契約状態、書面の到達日、クーリング・オフの期限、次の請求日、設定が済んでいるか。設定リンクの発行と再送、電話で受けた解約の手続き、操作の記録</td><td>常時</td></tr>
+        <tr><th>稼働状況ページ</th><td>サーバーごとの状態、ブロックリストの最終更新日時、過去90日の稼働率、障害の履歴</td><td>5分ごと</td></tr>
+        <tr><th>更新履歴ページ</th><td>ブロックリストの更新（日時・追加と削除の件数）、システムの更新、OS への対応状況</td><td>更新のたび</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <ul class="plain">
+    <li>人数の少ない区分（10人未満など）はまとめて表示し、個人が特定されないようにします。</li>
+    <li>集計に使った条件とブロックリストの版をレポートに書いておき、後から同じ数字を出し直せるようにします。</li>
+    <li>稼働状況ページは GitHub Actions で5分ごとに外から確認する仕組み（Upptime）で作れます。UptimeRobot の無料枠は商用に使えなくなったと報告されているので使いません。</li>
+  </ul>
+</section>
+
+<section id="naming" aria-labelledby="h-naming">
+  <h2 id="h-naming">サービス名の候補</h2>
+  <p class="sub">2回に分けて出した約60案を、電話で伝わるか・短いドメインが空いているか・他社とぶつからないか・効果を言い切っていないか、で絞りました。販売するのは提携先なので、最後は提携先と一緒に決めてください。</p>
+  <div class="names">
+    <article class="name-card">
+      <span class="rank">おすすめ 1</span>
+      <span class="nm">スマカサ</span>
+      <span class="dom">sumakasa.jp ／ sumakasa.com 空き</span>
+      <p>「スマホの傘」。名前と綴りがそのまま一致し、紛らわしい文字もありません。同じ名前のサービス・アプリ・商標は見つかりませんでした。</p>
+      <p class="con">注意: 「スマガサ」や確定申告の「スマカク」と聞き違えやすいので、「傘のカサ」と添える。「守る」を強く言うとウイルス対策と誤解される。</p>
+    </article>
+    <article class="name-card">
+      <span class="rank">おすすめ 2</span>
+      <span class="nm">スマホあみど</span>
+      <span class="dom">amidonet.jp ／ amidonet.com 空き</span>
+      <p>「スマホに網戸をつけるサービスです」の一言で仕組みが伝わります。風（いつもの通信）は通して、虫（広告・追跡）は入れない。</p>
+      <p class="con">注意: 名前と綴り（amidonet）がずれるので、案内は「あみどネット」に統一する。「網戸のあみど」と添える。</p>
+    </article>
+    <article class="name-card">
+      <span class="rank">おすすめ 3</span>
+      <span class="nm">スマかる</span>
+      <span class="dom">sumakaru ／ smakaru の .jp・.com すべて空き</span>
+      <p>「スマホ」と「かるい」を縮めた造語です。造語なので商標を取りやすく、綴りの揺れもまとめて押さえられます。</p>
+      <p class="con">注意: スマホ買取の「スマカリ」と1音違い。「軽い」が速くなる約束に聞こえないよう、トークは「重くなりにくい」で統一する。</p>
+    </article>
+  </div>
+  <div class="tbl-wrap">
+    <table>
+      <thead><tr><th>次点</th><th>空いているドメイン</th><th>気になる点</th></tr></thead>
+      <tbody>
+        <tr><th>スマホかるがる</th><td class="mono">karugaru.jp</td><td>一般語なので商標の保護が弱い。「軽くなる」と受け取られやすい。.com は転売業者が持っている</td></tr>
+        <tr><th>ばんがさ（番傘）</th><td class="mono">bangasa.jp</td><td>他社とぶつかる心配は少ないが、「ば／ま」を聞き違えやすい</td></tr>
+        <tr><th>すだれ</th><td class="mono">sudarenet.jp ／ .com</td><td>「すだれ頭」を連想させる。電話では「すたれ」と聞こえる</td></tr>
+        <tr><th>かなめ</th><td class="mono">kanamenet.jp ／ .com</td><td>機能が名前から伝わらない。建設業向けソフト「KANAME」がある</td></tr>
+        <tr><th>わがさ（和傘）</th><td class="mono">wagasanet.jp ／ .com</td><td>健康食品通販の「わかさ生活」と聞き違えやすい</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p class="src">避けた案の例: 「スマホすっきり」（クリーナーアプリや偽警告の宣伝文句と重なる）、「まもるくん」（自治体の公式キャラクターと同名）、「スマホおまもり」（同分野に同名があり、霊感商法も連想させる）。</p>
+  <p class="src">商標は特許庁のデータベース（J-PlatPat）でまだ調べていません。決める前に第9類・第38類・第42類・第45類を確認してください。ドメインの空き状況は2026年9月11日の確認時点のものです。決めたら .jp と .com をすぐ両方押さえてください。</p>
+</section>
+
+<section id="roadmap" aria-labelledby="h-roadmap">
+  <h2 id="h-roadmap">次にやること</h2>
+  <p class="sub">2027年3月の公開から逆算した順番です。最初の段階は、作る前に「売れる形か」を確かめる作業です。</p>
+  <ol class="steps">
+    <li>
+      <div>
+        <h3>決める・確かめる</h3>
+        <p class="who">2026年9〜10月</p>
+        <ul class="plain">
+          <li>国内の決済代行（ROBOT PAYMENT ほか）に座組みを説明して打診する。Stripe を使うなら、提携先名義で書面の承認をもらう</li>
+          <li>提携先と業務委託契約を結ぶ（責任の分担、管理料の数え方、トークと表示を事前に確認する権利、苦情が多いときに受付を止める権利、責任の上限、契約終了時にDNSを突然止めない手順）</li>
+          <li>サービス名とドメインを決め、Cloudflare のアカウントを作る</li>
+          <li>iOS 27 の公開直後（9月14〜15日）に、今の方式のプロファイルが入って動くかを実機で確かめる</li>
+          <li>規約・プライバシーポリシー・法定書面・電話トークの草案を作る</li>
+          <li>総合通信局に構成図を持って相談する（任意・無料の公的窓口）</li>
+        </ul>
+      </div>
+    </li>
+    <li>
+      <div>
+        <h3>最初の版を作る</h3>
+        <p class="who">2026年11〜12月</p>
+        <ul class="plain">
+          <li>iPhone 用の DNS 本体（ログを止めた証跡つき）と、ブロックリストの自動ビルド・自動テスト</li>
+          <li>申込ページ（同意は2段）、決済との連動、トークンの発行と停止、プロファイルの自動生成</li>
+          <li>法定書面 PDF の自動作成、発送と到達の記録、クーリング・オフ時の自動返金と停止</li>
+          <li>お客様ページ（件数、許可リスト、一時停止、外し方、開通の確認）</li>
+          <li>提携先の管理画面、月次レポート、稼働状況ページ（Cloudflare の外に置く）、更新履歴ページ</li>
+        </ul>
+      </div>
+    </li>
+    <li>
+      <div>
+        <h3>ベータで試す</h3>
+        <p class="who">2027年1〜2月</p>
+        <ul class="plain">
+          <li>提携先の社員やその家族など、30〜100台で使ってもらう</li>
+          <li>1台あたりの問い合わせ数を実測し、費用の表を確定する</li>
+          <li>iOS 16〜18・26・27、Wi-Fi・5G・ホテルなどのログイン画面、プライベートリレーや VPN との併用、日本の主なアプリで動作を確かめる</li>
+          <li>効果を自分たちで計測し、景品表示法の根拠資料として保管する</li>
+          <li>Android の中継サーバーを並行して作り、2月に同時公開するかを決める</li>
+        </ul>
+      </div>
+    </li>
+    <li>
+      <div>
+        <h3>公開</h3>
+        <p class="who">2027年3月</p>
+        <p>iPhone を公開します。準備が整っていれば Android も同時に公開します。</p>
+      </div>
+    </li>
+    <li>
+      <div>
+        <h3>公開後の追加</h3>
+        <p class="who">2027年4月以降</p>
+        <p>強めのブロック段、診断モード、後継の設定方式への移行、詐欺サイト対策の追加を検討します。詐欺サイト対策を加える場合も、「完全に守る」とは表示しません。</p>
+      </div>
+    </li>
+  </ol>
+</section>
+
+<section id="decisions" aria-labelledby="h-decisions">
+  <h2 id="h-decisions">決めてほしいこと</h2>
+  <p class="sub">それぞれにおすすめを付けました。作り込みの前に必要なのは1番だけです。ほかは決まったときに教えてください。</p>
+  <div class="tbl-wrap">
+    <table>
+      <thead><tr><th>決めること</th><th>おすすめ</th><th>理由</th></tr></thead>
+      <tbody>
+        <tr><th>1. 決済会社</th><td>Stripe は主な決済にしない。ROBOT PAYMENT を第一候補に、GMO・SP.LINKS・VeriTrans4G にも座組みを説明して打診する</td><td>Stripe は禁止業種に明記しており、承認をもらっても取り消されることがある。ここで止まると作り直しになる</td></tr>
+        <tr><th>2. 月額・初回の課金日・台数</th><td>初回の課金日は「書面の到着＋8日＋郵送の遅れ分」の後にする。「無料お試し」とは打ち出さない。1契約1台から始める</td><td>クーリング・オフ中の返金が起きず、分かりにくいお試しとも見られない</td></tr>
+        <tr><th>3. 管理料の「利用者数」の数え方</th><td>その月に課金が成立した件数</td><td>決済会社の記録と一致し、初回の課金日前やクーリング・オフの人が自然に外れる</td></tr>
+        <tr><th>4. 法定書面の担当</th><td>システムが PDF を作り、提携先が印刷して郵送する</td><td>書面を渡す義務は販売する提携先にある</td></tr>
+        <tr><th>5. 設定リンクの送り方</th><td>SMS は「0005」の共通番号から、提携先名と公式ドメインの URL をそのまま載せて送り、同じ内容をメールでも送る。架電の前に郵便で予告する。URL を載せない「口頭のドメイン＋コード入力」方式も比べる</td><td>偽 SMS と見分けてもらうため</td></tr>
+        <tr><th>6. Android の公開時期</th><td>iPhone を先に公開し、Android はベータの結果で決める</td><td>中継サーバーの運用と、止まったときのリスクが増える</td></tr>
+        <tr><th>7. 詐欺サイト対策</th><td>公開後に検討する（加えるときは同意を取り直す）</td><td>高齢のお客様には価値が高い一方、「守る」と表示すると危うい</td></tr>
+        <tr><th>8. 解約後の素通し期間</th><td>当面は無期限。長く使われていないものだけ止める</td><td>1人あたり月数セントで、消し忘れによる不通を防げる</td></tr>
+        <tr><th>9. 障害時の体制</th><td>お客様の一次窓口は提携先のコールセンター、夜間の自動通知はあなた</td><td>目標の稼働率と連絡時間を契約に書く</td></tr>
+        <tr><th>10. アカウントとドメインの名義</th><td>Cloudflare はあなたの会社の名義。DNS 用のドメインは提携先ドメインの下のサブドメインを任せてもらう</td><td>運用はあなた、お客様に見える名前は提携先にそろう</td></tr>
+        <tr><th>11. 検証用の端末</th><td>iPhone（iOS 18・26・27）、Android 2〜3機種、4キャリアの SIM</td><td>未確定事項の大半は実機でしか決着しない</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p class="src">会社名・提携先名・月額料金・サービス名は急ぎません。決まり次第、プロファイルの表示名や規約の案に反映します。</p>
+</section>
+
+<section id="unknowns" aria-labelledby="h-unknowns">
+  <h2 id="h-unknowns">未確定のこと</h2>
+  <p class="sub">一次情報で確かめきれなかったことです。ほとんどは、ベータの実機テストか問い合わせで決着します。</p>
+  <div class="tbl-wrap">
+    <table>
+      <thead><tr><th>分野</th><th>確かめること</th><th>確かめ方</th></tr></thead>
+      <tbody>
+        <tr><th>iPhone</th><td>URL にトークンを入れる方式が動くか。インストール直後に自動で有効になるか。AllowFailover がどんな失敗で切り替わるか。プライベートリレー利用中もブロックが効くか。3つの制限が効くか</td><td>実機</td></tr>
+        <tr><th>iOS 27</th><td>正式版で今の方式が入って動くか。後継の方式を一般のお客様が入れられるか</td><td>公開直後に実機</td></tr>
+        <tr><th>署名</th><td>署名したときの表示、証明書を更新した後に上書きできるか、署名者を提携先名義にできるか</td><td>実機・証明書の発行元</td></tr>
+        <tr><th>Android</th><td>中継サーバーの1台が止まったときの実際の動き。VPS 1台で何人分をさばけるか</td><td>実機・負荷試験</td></tr>
+        <tr><th>日本の環境</th><td>キャリアの留守番電話と +メッセージ、銀行・決済アプリ、ポイ活サイトで誤ブロックが起きないか</td><td>実機</td></tr>
+        <tr><th>費用</th><td>1台あたりの問い合わせ数、件数集計の費用、ブロックリストを入れた Worker の起動時間</td><td>ベータで実測</td></tr>
+        <tr><th>電気通信事業法</th><td>フィルタ型の DNS を有料で提供する場合の扱いと、事業者にあたるのが提携先かあなたの会社か（届出は不要の見込み）</td><td>総合通信局に相談</td></tr>
+        <tr><th>特商法</th><td>提携先の既存顧客が適用除外（過去1年に2回以上の取引など）にあたるか。あたらない前提で、全員に書面とクーリング・オフを行う</td><td>前提で回避</td></tr>
+        <tr><th>規約</th><td>決済各社が電話勧誘販売の加盟店として受け入れるか（カード会社の審査を含む）。Cloudflare の規約で不特定多数向けの DNS が許されるか</td><td>各社に文面で確認</td></tr>
+        <tr><th>その他</th><td>GPL のブロックリストを商用サーバーで使うときの義務の範囲。あなたの会社が景品表示法の「表示主体」になるか</td><td>文言は提携先が作る前提で回避</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <details>
+    <summary>このレポートの調べ方</summary>
+    <div class="prose" style="margin-top:12px">
+      <p>テーマごとに調査担当が一次情報（Apple・Google・Cloudflare・Stripe の公式文書、e-Gov の法令、総務省・消費者庁・個人情報保護委員会の資料、論文、各 OSS のリポジトリ）を確認し、別の担当がそれぞれの主張を反証しようとして検証しました。「誤り」と判定された主張はなく、一部訂正が入ったものは訂正後の内容を載せています。実機での動作確認はまだしていません。</p>
+    </div>
+  </details>
+</section>
+
+</main>
+</div>
+
+</body></html>
